@@ -13,17 +13,21 @@ chaincoinService.start();
 
 
 chaincoinService.BestBlockHash.subscribe((bestBlockHash) =>{
-debugger;
+
+});
+
+chaincoinService.BlockCount.subscribe((bestBlockHash) =>{
+    debugger;
 });
 
 chaincoinService.ChainTxStats.subscribe((ChainTxStats) =>{
-    debugger;
+  
 });
 
 chaincoinService.Difficulty.subscribe((Difficulty) =>{
-    debugger;
+
 });
 
 chaincoinService.NetworkHashps.subscribe((NetworkHashps) =>{
-    debugger;
+
 });

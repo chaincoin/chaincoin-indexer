@@ -12,6 +12,7 @@ module.exports = function (chaincoinService) {
       var newDifficulty = await chaincoinService.chaincoinApi.getDifficulty();
 
       if (newDifficulty == difficulty) return;
+      difficulty = newDifficulty;
       observer.next(newDifficulty);
     };
 

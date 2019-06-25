@@ -19,6 +19,7 @@ class ChaincoinService{
 
 
         this.BestBlockHash = require('./observables/BestBlockHashObservable')(this);
+        this.BlockCount = require('./observables/BlockCountObservable')(this);
         this.ChainTxStats = require('./observables/ChainTxStatsObservable')(this);
         this.Difficulty = require('./observables/DifficultyObservable')(this);
         this.NetworkHashps = require('./observables/NetworkHashpsObservable')(this);

@@ -12,6 +12,7 @@ module.exports = function (chaincoinService) {
       var newChainTxStats = await chaincoinService.chaincoinApi.getChainTxStats();
 
       if (chainTxStats != null && newChainTxStats.time == chainTxStats.time) return;
+      chainTxStats = newChainTxStats;
       observer.next(newChainTxStats);
     };
 

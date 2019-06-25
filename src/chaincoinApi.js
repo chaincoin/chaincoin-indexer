@@ -103,7 +103,7 @@ class ChaincoinApi{
     }
     
     
-    getRawMemPool(priority) {
+    getRawMemPool() {
         return this.rpcRequest("getrawmempool", []);
     }
     
