@@ -1,0 +1,20 @@
+{
+  "name": "chaincoin-indexer",
+  "version": "0.0.1",
+  "description": "chaincoin indexer",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": "node --inspect=0.0.0.0:39276 server.js",
+    "debug-brk": "node --inspect-brk=0.0.0.0:39276 server.js"
+  },
+  "author": "Chris McNamee",
+  "license": "ISC",
+  "dependencies": {
+    "big.js": "^5.2.2",
+    "chaincoinApi": "file:../Shared/chaincoinApi",
+    "indexApi": "file:../Shared/indexApi",
+    "mongodb": "^3.1.13",
+    "zeromq": "^4.6.0"
+  }
+}

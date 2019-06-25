@@ -1,0 +1,22 @@
+FROM ubuntu:16.04
+
+RUN apt-get update
+RUN apt-get install -y curl
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs build-essential
+
+
+WORKDIR /root/chaincoin-index
+
+COPY chaincoin-index .
+RUN rm -rf node_modules
+
+RUN mkdir /root/Shared/
+COPY shared /root/Shared/
+
+
+
+RUN npm install
+
+
+CMD [ "npm", "start" ]
