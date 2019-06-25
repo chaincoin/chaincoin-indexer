@@ -34,6 +34,9 @@ class MasternodeService{
         this.intervalId = null;
     }
 
+    isRunning(){
+        return this.intervalId != null;
+    }
 
     async run(){
 

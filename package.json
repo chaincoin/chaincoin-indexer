@@ -2,7 +2,7 @@
   "name": "chaincoin-indexer",
   "version": "0.0.1",
   "description": "chaincoin indexer",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "debug": "node --inspect=0.0.0.0:39276 server.js",
@@ -12,9 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "big.js": "^5.2.2",
-    "chaincoinApi": "file:../Shared/chaincoinApi",
-    "indexApi": "file:../Shared/indexApi",
     "mongodb": "^3.1.13",
+    "rxjs": "^6.5.2",
     "zeromq": "^4.6.0"
   }
 }

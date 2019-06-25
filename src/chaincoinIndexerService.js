@@ -64,6 +64,8 @@ class ChaincoinIndexerService{
         if (this.timeoutId == null) throw "Service not started";
         clearTimeout(this.timeoutId);
         this.timeoutId = null;
+
+        //TODO: Disconnect zmq client
     }
 
     isRunning(){
