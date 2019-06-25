@@ -16,8 +16,13 @@ chaincoinService.BestBlockHash.subscribe((bestBlockHash) =>{
 
 });
 
-chaincoinService.BlockCount.subscribe((bestBlockHash) =>{
+chaincoinService.BlockchainInfo.subscribe((BlockchainInfo) =>{
     debugger;
+});
+
+
+chaincoinService.BlockCount.subscribe((bestBlockHash) =>{
+    
 });
 
 chaincoinService.ChainTxStats.subscribe((ChainTxStats) =>{
@@ -31,3 +36,8 @@ chaincoinService.Difficulty.subscribe((Difficulty) =>{
 chaincoinService.NetworkHashps.subscribe((NetworkHashps) =>{
 
 });
+
+chaincoinService.TxOutSetInfo.subscribe((TxOutSetInfo) =>{
+    debugger;
+});
+
