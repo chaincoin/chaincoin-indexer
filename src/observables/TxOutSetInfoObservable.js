@@ -28,10 +28,12 @@ module.exports = function (chaincoinService) {
           observer.next(newTxOutSetInfo);
         };
     
-        var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getTxOutSetInfo());
-    
+        var bestBlockHashSubscription = null;
+        if (blockHash == null || blockHash == "")chaincoinService.BestBlockHash.subscribe(bestBlockHash => getTxOutSetInfo());
+        else getTxOutSetInfo();
+
         return () => {
-          bestBlockHashSubscription.unsubscribe();
+          if(bestBlockHashSubscription != null) bestBlockHashSubscription.unsubscribe();
         }
       }).pipe(shareReplay({
         bufferSize: 1,
