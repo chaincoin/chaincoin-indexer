@@ -5,7 +5,7 @@ const { shareReplay } = require('rxjs/operators');
 
 module.exports = function (chaincoinService) {
 
-  var txOutSetInfoObservableCache = []; //TODO: memory leak
+  var networkHashpsObservableCache = []; //TODO: memory leak
 
   return (blockHash) => {
 
