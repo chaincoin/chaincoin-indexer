@@ -6,9 +6,9 @@ module.exports = function (chaincoinService) {
 
   var blockObservableCache = []; //TODO: memory leak
 
-  return (blockId) => {
+  return (blockHash) => {
 
-    var blockObservable = blockObservableCache[blockId];
+    var blockObservable = blockObservableCache[blockHash];
     if (blockObservable == null)
     {
       blockObservable = Observable.create(function (observer) {
@@ -16,7 +16,7 @@ module.exports = function (chaincoinService) {
         var block = null;
     
         var getBlock = async () => {
-          var newBlock = await chaincoinService.chaincoinApi.getBlock(blockId);
+          var newBlock = await chaincoinService.chaincoinApi.getBlock(blockHash);
     
           if (block != null && JSON.stringify(newBlock) == JSON.stringify(block)) return;
           block = newBlock;
@@ -32,8 +32,8 @@ module.exports = function (chaincoinService) {
         bufferSize: 1,
         refCount: true
       }));
-      
-      blockObservableCache[blockId] = blockObservable;
+
+      blockObservableCache[blockHash] = blockObservable;
     }
 
     return blockObservable;
