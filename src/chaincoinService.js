@@ -18,6 +18,8 @@ class ChaincoinService{
         this.chaincoinZmqSockMessage = new Subject();
 
 
+        this.NewBlockHash = require('./observables/NewBlockHashObservable')(this);
+        this.NewTransactionHash = require('./observables/NewTransactionHashObservable')(this);
         this.BestBlockHash = require('./observables/BestBlockHashObservable')(this);
         this.BlockchainInfo = require('./observables/BlockchainInfoObservable')(this);
         this.BlockCount = require('./observables/BlockCountObservable')(this);
