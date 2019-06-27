@@ -19,26 +19,15 @@ module.exports = function(chaincoinService){
         }
 
 
-        var connectSubscription = chaincoinService.chaincoinZmqSockConnect.subscribe((connected) =>{
-            if (connected == true) chaincoinService.chaincoinZmqSock.subscribe('hashblock');
-        });
-
-        var messageSubscription = chaincoinService.chaincoinZmqSockMessage.subscribe(async ({topic,message,sequence}) =>{
-
-            if (topic == "hashblock")
-            {
-                var messageBlockHash = message.toString('hex');
-                checkBestBlockHash();
-            }
+        var newBlockHashSubscription = chaincoinService.NewBlockHash.subscribe(async ({topic,message,sequence}) =>{
+            checkBestBlockHash();
         });
 
         checkBestBlockHash();
         
 
         return () => {
-            connectSubscription.unsubscribe();
-            messageSubscription.unsubscribe();
-            chaincoinService.chaincoinZmqSock.unsubscribe('hashblock');
+            newBlockHashSubscription.unsubscribe();
         }
     }).pipe(shareReplay({
         bufferSize: 1,
