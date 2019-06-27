@@ -10,10 +10,23 @@ var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://1
 chaincoinService.start();
 
 
+var sub = chaincoinService.BestBlockHash.subscribe((BestBlockHash) =>{
+
+    sub.unsubscribe();
+
+    chaincoinService.BestBlockHash.subscribe((NewBlockHash) =>{
+
+        
+    
+        
+    });
+});
+/*
 
 
 chaincoinService.NewBlockHash.subscribe((NewBlockHash) =>{
 
+    
 });
 
 chaincoinService.NewTransactionHash.subscribe((NewTransactionHash) =>{
@@ -48,4 +61,4 @@ chaincoinService.NetworkHashps.subscribe((NetworkHashps) =>{
 chaincoinService.TxOutSetInfo.subscribe((TxOutSetInfo) =>{
 
 });
-
+*/
