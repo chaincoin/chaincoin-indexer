@@ -24,10 +24,12 @@ module.exports = function (chaincoinService) {
           observer.next(newNetworkHashps);
         };
 
-        var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getNetworkHashps());
+        var bestBlockHashSubscription = null;
+        if (blockHash == null || blockHash == "") chaincoinService.BestBlockHash.subscribe(bestBlockHash => getNetworkHashps());
+        else getNetworkHashps()
 
         return () => {
-          bestBlockHashSubscription.unsubscribe();
+          if (bestBlockHashSubscription != null) bestBlockHashSubscription.unsubscribe();
         }
       }).pipe(shareReplay({
         bufferSize: 1,
