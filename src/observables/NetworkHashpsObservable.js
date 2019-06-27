@@ -2,27 +2,41 @@ const { Observable, Subject } = require('rxjs');
 const { shareReplay } = require('rxjs/operators');
 
 
+
 module.exports = function (chaincoinService) {
 
-  return Observable.create(function (observer) {
+  var txOutSetInfoObservableCache = []; //TODO: memory leak
 
-    var networkHashps = null;
+  return (blockHash) => {
 
-    var getNetworkHashps = async () => {
-      var newNetworkHashps = await chaincoinService.chaincoinApi.getNetworkHashps();
+    var networkHashpsObservable = networkHashpsObservableCache[blockHash];
+    if (networkHashpsObservable == null)
+    {
+      networkHashpsObservable = Observable.create(function (observer) {
 
-      if (newNetworkHashps == networkHashps) return;
-      networkHashps = newNetworkHashps;
-      observer.next(newNetworkHashps);
-    };
+        var networkHashps = null;
 
-    var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getNetworkHashps());
+        var getNetworkHashps = async () => {
+          var newNetworkHashps = await chaincoinService.chaincoinApi.getNetworkHashps();
 
-    return () => {
-      bestBlockHashSubscription.unsubscribe();
+          if (newNetworkHashps == networkHashps) return;
+          networkHashps = newNetworkHashps;
+          observer.next(newNetworkHashps);
+        };
+
+        var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getNetworkHashps());
+
+        return () => {
+          bestBlockHashSubscription.unsubscribe();
+        }
+      }).pipe(shareReplay({
+        bufferSize: 1,
+        refCount: true
+      }));
+      
+      networkHashpsObservableCache[blockHash] = networkHashpsObservable;
     }
-  }).pipe(shareReplay({
-    bufferSize: 1,
-    refCount: true
-  }));
+
+    return txOutSetInfoObservable;
+  };
 };
