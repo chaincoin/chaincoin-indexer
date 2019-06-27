@@ -12,12 +12,20 @@ chaincoinService.start();
 
 
 
+chaincoinService.NewBlockHash.subscribe((NewBlockHash) =>{
+
+});
+
+chaincoinService.NewTransactionHash.subscribe((NewTransactionHash) =>{
+
+});
+
 chaincoinService.BestBlockHash.subscribe((bestBlockHash) =>{
 
 });
 
 chaincoinService.BlockchainInfo.subscribe((BlockchainInfo) =>{
-    debugger;
+
 });
 
 
@@ -38,6 +46,6 @@ chaincoinService.NetworkHashps.subscribe((NetworkHashps) =>{
 });
 
 chaincoinService.TxOutSetInfo.subscribe((TxOutSetInfo) =>{
-    debugger;
+
 });
 
