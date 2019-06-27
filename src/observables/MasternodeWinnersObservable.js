@@ -19,7 +19,8 @@ module.exports = function (chaincoinService) {
     };
 
     var intervalId = setInterval(() => getMasternodeWinners(), 30000);
-
+    getMasternodeWinners();
+    
     return () => {
       clearInterval(intervalId);
     }

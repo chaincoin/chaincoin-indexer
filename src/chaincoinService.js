@@ -38,6 +38,8 @@ class ChaincoinService{
         this.MasternodeCount = require('./observables/MasternodeCountObservable')(this);
 
         this.MasternodeWinners = require('./observables/MasternodeWinnersObservable')(this);
+
+        this.memPoolInfo = require('./observables/MemPoolInfoObservable')(this);
     }
     
 

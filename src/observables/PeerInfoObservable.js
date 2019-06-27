@@ -20,6 +20,8 @@ module.exports = function (chaincoinService) {
 
     var intervalId = setInterval(() => getPeerInfo(), 30000);
 
+    getPeerInfo();
+
     return () => {
       clearInterval(intervalId);
     }

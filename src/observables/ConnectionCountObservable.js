@@ -19,7 +19,8 @@ module.exports = function (chaincoinService) {
     };
 
     var intervalId = setInterval(() => getConnectionCount(), 30000);
-
+    getConnectionCount();
+    
     return () => {
       clearInterval(intervalId);
     }
