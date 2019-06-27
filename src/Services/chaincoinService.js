@@ -43,6 +43,8 @@ class ChaincoinService{
 
 
         this.Block = require('../observables/BlockObservables')(this);
+        this.BlockHash = require('../observables/BlockHashObservables')(this);
+
         this.Transaction = require('../observables/TransactionObservables')(this);
     }
     
