@@ -18,28 +18,32 @@ class ChaincoinService{
         this.chaincoinZmqSockMessage = new Subject();
 
 
-        this.NewBlockHash = require('./observables/NewBlockHashObservable')(this);
-        this.NewTransactionHash = require('./observables/NewTransactionHashObservable')(this);
+        this.NewBlockHash = require('../observables/NewBlockHashObservable')(this);
+        this.NewTransactionHash = require('../observables/NewTransactionHashObservable')(this);
 
 
-        this.BestBlockHash = require('./observables/BestBlockHashObservable')(this);
-        this.BlockchainInfo = require('./observables/BlockchainInfoObservable')(this);
-        this.BlockCount = require('./observables/BlockCountObservable')(this);
-        this.ChainTxStats = require('./observables/ChainTxStatsObservable')(this);
-        this.Difficulty = require('./observables/DifficultyObservable')(this);
-        this.NetworkHashps = require('./observables/NetworkHashpsObservable')(this);
-        this.TxOutSetInfo = require('./observables/TxOutSetInfoObservable')(this);
+        this.BestBlockHash = require('../observables/BestBlockHashObservable')(this);
+        this.BlockchainInfo = require('../observables/BlockchainInfoObservable')(this);
+        this.BlockCount = require('../observables/BlockCountObservable')(this);
+        this.ChainTxStats = require('../observables/ChainTxStatsObservable')(this);
+        this.Difficulty = require('../observables/DifficultyObservable')(this);
+        this.NetworkHashps = require('../observables/NetworkHashpsObservable')(this);
+        this.TxOutSetInfo = require('../observables/TxOutSetInfoObservable')(this);
         
 
-        this.PeerInfo = require('./observables/PeerInfoObservable')(this);
-        this.ConnectoinCount = require('./observables/ConnectionCountObservable')(this);
+        this.PeerInfo = require('../observables/PeerInfoObservable')(this);
+        this.ConnectoinCount = require('../observables/ConnectionCountObservable')(this);
 
-        this.MasternodeList = require('./observables/MasternodeListObservable')(this);
-        this.MasternodeCount = require('./observables/MasternodeCountObservable')(this);
+        this.MasternodeList = require('../observables/MasternodeListObservable')(this);
+        this.MasternodeCount = require('../observables/MasternodeCountObservable')(this);
 
-        this.MasternodeWinners = require('./observables/MasternodeWinnersObservable')(this);
+        this.MasternodeWinners = require('../observables/MasternodeWinnersObservable')(this);
 
-        this.memPoolInfo = require('./observables/MemPoolInfoObservable')(this);
+        this.memPoolInfo = require('../observables/MemPoolInfoObservable')(this);
+
+
+        this.Block = require('../observables/BlockObservables')(this);
+        this.Transaction = require('../observables/TransactionObservables')(this);
     }
     
 

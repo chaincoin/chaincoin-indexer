@@ -1,4 +1,4 @@
-var  ChaincoinService = require('./chaincoinService.js');
+var  ChaincoinService = require('./Services/chaincoinService.js');
 var  ChaincoinApi = require('./chaincoinApi');
 
 
@@ -10,16 +10,9 @@ var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://1
 chaincoinService.start();
 
 
-var sub = chaincoinService.BestBlockHash.subscribe((BestBlockHash) =>{
+var sub = chaincoinService.Block("00000000000a38ddcd0734e3e810fc3d607ab4eb6dab3292b9a1e6c4f3db3cb9").subscribe((block) =>{
 
-    sub.unsubscribe();
-
-    chaincoinService.BestBlockHash.subscribe((NewBlockHash) =>{
-
-        
-    
-        
-    });
+   
 });
 /*
 
