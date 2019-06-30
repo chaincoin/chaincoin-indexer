@@ -1,4 +1,5 @@
 var  ChaincoinService = require('./Services/chaincoinService.js');
+var  MasternodeService = require('./Services/masternodeService');
 var  ChaincoinApi = require('./chaincoinApi');
 
 
@@ -9,12 +10,24 @@ var chaincoinApi = new ChaincoinApi("127.0.0.1",8332, "chaincoin","vjjbuuy754edv
 var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
 chaincoinService.start();
 
+var masternodeService = new MasternodeService(chaincoinService);
+masternodeService.start();
 
+
+
+
+
+
+
+
+
+
+/*
 var sub = chaincoinService.Block("00000000000a38ddcd0734e3e810fc3d607ab4eb6dab3292b9a1e6c4f3db3cb9").subscribe((block) =>{
 
    
 });
-/*
+
 
 
 chaincoinService.NewBlockHash.subscribe((NewBlockHash) =>{
