@@ -36,6 +36,7 @@ class ChaincoinService{
 
         this.MasternodeList = require('../observables/MasternodeListObservable')(this);
         this.MasternodeCount = require('../observables/MasternodeCountObservable')(this);
+        this.MasternodeListEntry = require('../observables/MasternodeListEntryObservables')(this);
 
         this.MasternodeWinners = require('../observables/MasternodeWinnersObservable')(this);
 
@@ -48,6 +49,10 @@ class ChaincoinService{
         this.BlockHash = require('../observables/BlockHashObservables')(this);
 
         this.Transaction = require('../observables/TransactionObservables')(this);
+
+        this.MasternodeListEntryAdded = require('../observables/MasternodeListEntryAddedObservable')(this);
+        this.MasternodeListEntryRemoved = require('../observables/MasternodeListEntryRemovedObservable')(this);
+        this.MasternodeListEntryStatusChanged = require('../observables/MasternodeListEntryStatusChangedObservable')(this);
     }
     
 
