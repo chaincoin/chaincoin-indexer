@@ -36,6 +36,6 @@ module.exports = function (chaincoinService) {
       transactionObservableCache[transactionId] = transactionObservable;
     }
 
-    return blockObservable;
+    return transactionObservable;
   };
 };
