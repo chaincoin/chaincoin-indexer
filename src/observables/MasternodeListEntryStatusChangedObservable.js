@@ -16,7 +16,7 @@ module.exports = function (chaincoinService) {
       }
 
       Object.keys(newMasternodeList).forEach(output => {
-        if (masternodeList[output] != null && masternodeList[output].status != newMasternodeList[output].status) observer.next({output:output, oldstate:newMasternodeList[output], newState:newMasternodeList[output]});
+        if (masternodeList[output] != null && masternodeList[output].status != newMasternodeList[output].status) observer.next({output:output, oldState:newMasternodeList[output], newState:newMasternodeList[output]});
       })
 
       masternodeList = newMasternodeList;
