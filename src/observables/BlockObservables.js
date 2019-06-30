@@ -16,11 +16,20 @@ module.exports = function (chaincoinService) {
         var block = null;
     
         var getBlock = async () => {
-          var newBlock = await chaincoinService.chaincoinApi.getBlock(blockHash);
+
+          try
+          {
+            var newBlock = await chaincoinService.chaincoinApi.getBlock(blockHash);
     
-          if (block != null && JSON.stringify(newBlock) == JSON.stringify(block)) return;
-          block = newBlock;
-          observer.next(newBlock);
+            if (block != null && JSON.stringify(newBlock) == JSON.stringify(block)) return;
+            block = newBlock;
+            observer.next(newBlock);
+          }
+          catch(ex)
+          {
+            observer.error(ex);
+          }
+          
         };
     
         var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getBlock());
