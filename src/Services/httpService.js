@@ -61,6 +61,7 @@ class HttpService{
 
 var chaincoinServiceToMethods = (chaincoinService) =>{
     return {
+        ping:() => "pong",
         getBlockCount:() => {
             return chaincoinService.BlockCount.pipe(first()).toPromise()
         },
@@ -93,11 +94,75 @@ class WebSocketConnection{
 
         this.subscriptions = [];
 
-        ws.on('message',this.handleMessage);
+        ws.on('message',(message) => this.handleMessage(message));
         ws.on('close', () => httpService.cleanWsConnection(this));
     }
 
-    handleMessage(message){
+    async handleMessage(message){
+
+        var request = null;
+        try{
+            request = JSON.parse(message);
+        }
+        catch(ex)
+        {
+            this.ws.send(JSON.stringify({
+                op: "Response",
+                data:"invalid json",
+                success:false
+            }));
+        }
+
+        
+
+
+
+        var processFunc = this.httpService.serverMethods[request.op];
+        if (processFunc == null) {
+            this.ws.send(JSON.stringify({
+                op: "Response",
+                data:"method not found",
+                success:false
+            }));
+            return;
+        }
+
+        var funcParams = getParamNames(processFunc);
+
+        var parms = funcParams.map(function(item){
+            return request[item];
+        });
+
+      
+        try{
+
+            var data = await processFunc.apply(null,parms);
+            this.ws.send(JSON.stringify({
+                op: request.op + "Response",
+                data: data,
+                success:true
+            }));
+        }
+        catch(ex)
+        {
+            this.ws.send(JSON.stringify({
+                op: request.op + "Response",
+                success:false
+            }));
+        }
+        
 
     }
+}
+
+
+
+var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+var ARGUMENT_NAMES = /([^\s,]+)/g;
+function getParamNames(func) {
+    var fnStr = func.toString().replace(STRIP_COMMENTS, '');
+    var result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
+    if (result === null)
+        result = [];
+    return result;
 }
