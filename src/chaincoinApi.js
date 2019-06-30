@@ -197,8 +197,14 @@ class ChaincoinApi{
 
     rpcRequest(method, params){
 
+        var finallyFunc = null;
+        var promise = new Promise((resolve, reject) =>{
+            finallyFunc = resolve;
+        });
 
-        this.previousRpcRequestPromise = this.previousRpcRequestPromise.then(() =>{
+
+
+        var dataPromise = this.previousRpcRequestPromise.then(() =>{
             return new Promise((resolve, reject) => {
                 var auth = 'Basic ' + Buffer.from(this.rpcUser + ':' + this.rpcPassword).toString('base64');
         
@@ -257,12 +263,17 @@ class ChaincoinApi{
                 }));
         
                 req.end();
-            });
+            }).finally(finallyFunc);
+        });
+
+        this.previousRpcRequestPromise = this.previousRpcRequestPromise.then(()=>{
+            return promise;
         })
         
-        
+
+
     
-        return this.previousRpcRequestPromise;
+        return dataPromise;
     }
 
 }
