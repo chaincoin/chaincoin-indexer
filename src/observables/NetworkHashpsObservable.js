@@ -39,6 +39,7 @@ module.exports = function (chaincoinService) {
       networkHashpsObservableCache[blockHash] = networkHashpsObservable;
     }
 
-    return txOutSetInfoObservable;
+    return networkHashpsObservable;
   };
 };
+
