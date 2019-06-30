@@ -2,13 +2,15 @@ class MasternodeService{
 
     
 
-    constructor(chaincoinService) {
+    constructor(chaincoinService, indexApi) {
         this.chaincoinService = chaincoinService;
 
         this.onError = null;
         this.masternodeListEntryAddedSubscription = null;
         this.masternodeListEntryRemovedSubscription = null;
         this.masternodeListEntryStatusChangedSubscription = null;
+
+        this.indexApi = indexApi;
     }
     
 
@@ -45,7 +47,11 @@ class MasternodeService{
     async processMasternodeListEntryAdded(mnListEntry){
         try
         {
-            debugger;
+            indexApi.saveMasternodeEvent({
+                output: mnListEntry.output,
+                time: new Date(),
+                event: "newMasternode"
+            });
         }
         catch(ex)
         {
@@ -58,7 +64,11 @@ class MasternodeService{
     async processMasternodeListEntryRemoved(mnListEntry){
         try
         {
-            debugger;
+            indexApi.saveMasternodeEvent({
+                output: mnListEntry.output,
+                time: new Date(),
+                event: "removedMasternode"
+            });
         }
         catch(ex)
         {
@@ -71,7 +81,13 @@ class MasternodeService{
     async processMasternodeListEntryStatusChanged(mnListEntry){
         try
         {
-            debugger;
+            indexApi.saveMasternodeEvent({
+                output: mnListEntry.output,
+                time: new Date(),
+                event: "changedMasternode",
+                oldStatus: mnListEntry.oldState.status,
+                newStatus: mnListEntry.newState.status
+            });
         }
         catch(ex)
         {
@@ -85,7 +101,11 @@ class MasternodeService{
     async processMasternodeListEntryExpiring(mnListEntry){
         try
         {
-            debugger;
+            indexApi.saveMasternodeEvent({
+                output: mnListEntry.output,
+                time: new Date(),
+                event: "expiringMasternode"
+            });
         }
         catch(ex)
         {
