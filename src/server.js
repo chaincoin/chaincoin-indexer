@@ -1,6 +1,7 @@
 var  ChaincoinService = require('./Services/chaincoinService.js');
 var  MasternodeService = require('./Services/masternodeService');
 var  ChaincoinApi = require('./chaincoinApi');
+var  indexApi = require('./indexApi');
 
 
 
@@ -10,7 +11,7 @@ var chaincoinApi = new ChaincoinApi("127.0.0.1",8332, "chaincoin","vjjbuuy754edv
 var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
 chaincoinService.start();
 
-var masternodeService = new MasternodeService(chaincoinService);
+var masternodeService = new MasternodeService(chaincoinService, indexApi);
 masternodeService.start();
 
 
