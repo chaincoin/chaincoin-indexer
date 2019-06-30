@@ -20,9 +20,6 @@ module.exports = function (chaincoinService) {
       var runDate = new Date();
 
 
-      Object.keys(newMasternodeList).forEach(output => {
-        if (masternodeList[output] != null && masternodeList[output].status != newMasternodeList[output].status) 
-      })
       var lastCompareDate = new Date(checkMasternodesLastRunDate.getTime() - (1000 * 60 * 30));
       var compareDate = new Date(runDate.getTime() - (1000 * 60 * 30));
 
@@ -33,9 +30,9 @@ module.exports = function (chaincoinService) {
 
           if (mn == null) return;
 
-          var nmnlastSeen = new Date(nmn.value.lastseen * 1000);
+          var nmnlastSeen = new Date(nmn.lastseen * 1000);
           
-          if (nmn.value.status == "ENABLED" && nmnlastSeen < compareDate && nmnlastSeen >= lastCompareDate)
+          if (nmn.status == "ENABLED" && nmnlastSeen < compareDate && nmnlastSeen >= lastCompareDate)
           {
             observer.next({output:output, mn:nmn});
           }
