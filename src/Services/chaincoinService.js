@@ -99,21 +99,3 @@ class ChaincoinService{
   }
   module.exports = ChaincoinService;
 
-/*
-  var processObservable = (observableClass, chaincoinService) =>{
-
-    var observable = null;
-
-    return Observable.create(function (observer) {
-
-        if (observable == null)
-        {
-            observable = 
-        }
-
-        return () => {
-
-        }
-      });
-
-  }*/
