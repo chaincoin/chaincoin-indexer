@@ -1,6 +1,8 @@
 var http = require('http');
 var WebSocket = require('ws');
-var first = require('rxjs/operators').first;
+var url = require('url');
+var { first } = require('rxjs/operators');
+
 
 class HttpService{
 
@@ -18,10 +20,7 @@ class HttpService{
 
 
 
-        this.handleHttpRequest = async(req, res) =>
-        {
-            var blockCount = await this.serverMethods.getBlockCount();
-        }
+        
 
         this.handleWsConnection = async(ws)  =>
         {
@@ -29,7 +28,7 @@ class HttpService{
         }
 
         this.cleanWsConnection = async(webSocket) =>{
-            webSocket.subscriptions.forEach(subscription => subscription.unsubscribe());
+            Object.keys(webSocket.subscriptions).forEach(subscriptionName => webSocket.subscriptions[subscriptionName].unsubscribe());
         }
     }
     
@@ -38,7 +37,7 @@ class HttpService{
     start()
     {
         if (this.server != null) throw "Service already started";
-        this.server = http.createServer(this.handleHttpRequest);
+        this.server = http.createServer((req, res) => this.handleHttpRequest(req,res));
         this.wsServer = new WebSocket.Server({ server: this.server });
         this.wsServer.on('connection',this.handleWsConnection);
 
@@ -55,7 +54,40 @@ class HttpService{
         return this.server != null;
     }
 
-    
+    async handleHttpRequest(req, res)
+    {
+
+        var url_parts = url.parse(req.url, true);
+        var method = url_parts.pathname.substring(1); 
+
+        var processFunc = this.serverMethods[method];
+        if (processFunc == null) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('\n');
+            return;
+        }
+
+        var funcParams = getParamNames(processFunc);
+
+        var parms = funcParams.map(function(item){
+            return url_parts.query[item];
+        });
+
+        try
+        {
+            var data = await processFunc.apply(null,parms);
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(data, null, 4) + '\n');
+        }
+        catch(ex)
+        {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('failed\n');
+        }
+        
+
+    }
 
 }
 
@@ -92,7 +124,7 @@ class WebSocketConnection{
         this.ws = ws;
         this.httpService = httpService;
 
-        this.subscriptions = [];
+        this.subscriptions = {};
 
         ws.on('message',(message) => this.handleMessage(message));
         ws.on('close', () => httpService.cleanWsConnection(this));
@@ -113,13 +145,77 @@ class WebSocketConnection{
             }));
         }
 
-        
+        var messageId = request.id;
 
+        
+        if (request.op.endsWith("Subscribe"))
+        {
+            var observableFuncName = request.op.substring(0, request.op.length - 9);
+            var observableFunc = this.httpService.serverObservables[observableFuncName];
+            if (observableFunc == null)return
+
+            var observableFuncParamNames = getParamNames(observableFunc);
+
+            var observableFuncParams = observableFuncParamNames.map(function(item){
+                return request[item];
+            });
+            
+            var observableName = observableFuncName;
+            observableFuncParams.forEach(observableFuncParam => observableName = observableFuncName + "-" + observableFuncParam);
+
+            if (this.subscriptions[observableName] != null) return;
+
+            this.subscriptions[observableName] = observableFunc.apply(null,observableFuncParams).subscribe((data)=>{
+                this.ws.send(JSON.stringify({
+                    op: observableFuncName,
+                    data: data
+                }));
+            },(err) =>{
+                
+            });
+
+            this.ws.send(JSON.stringify({
+                id: messageId,
+                op: request.op + "Response",
+                success:true
+            }));
+
+            return;
+        }
+        if (request.op.endsWith("Unsubscribe"))
+        {
+            var observableFuncName = request.op.substring(0, request.op.length - 11);
+            var observableFunc = this.httpService.serverObservables[observableFuncName];
+            if (observableFunc == null)return
+
+            var observableFuncParamNames = getParamNames(observableFunc);
+
+            var observableFuncParams = observableFuncParamNames.map(function(item){
+                return request[item];
+            });
+            
+            var observableName = observableFuncName;
+            observableFuncParams.forEach(observableFuncParam => observableName = observableFuncName + "-" + observableFuncParam);
+
+            if (this.subscriptions[observableName] == null) return;
+
+            this.subscriptions[observableName].unsubscribe();
+            this.subscriptions[observableName] = null;
+
+            this.ws.send(JSON.stringify({
+                id: messageId,
+                op: request.op + "Response",
+                success:true
+            }));
+            return;
+        }
+        
 
 
         var processFunc = this.httpService.serverMethods[request.op];
         if (processFunc == null) {
             this.ws.send(JSON.stringify({
+                id: messageId,
                 op: "Response",
                 data:"method not found",
                 success:false
@@ -138,6 +234,7 @@ class WebSocketConnection{
 
             var data = await processFunc.apply(null,parms);
             this.ws.send(JSON.stringify({
+                id: messageId,
                 op: request.op + "Response",
                 data: data,
                 success:true
@@ -146,6 +243,7 @@ class WebSocketConnection{
         catch(ex)
         {
             this.ws.send(JSON.stringify({
+                id: messageId,
                 op: request.op + "Response",
                 success:false
             }));
