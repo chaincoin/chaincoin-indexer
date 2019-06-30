@@ -53,6 +53,7 @@ class ChaincoinService{
         this.MasternodeListEntryAdded = require('../observables/MasternodeListEntryAddedObservable')(this);
         this.MasternodeListEntryRemoved = require('../observables/MasternodeListEntryRemovedObservable')(this);
         this.MasternodeListEntryStatusChanged = require('../observables/MasternodeListEntryStatusChangedObservable')(this);
+        this.MasternodeListEntryExpiring = require('../observables/MasternodeListEntryExpiringObservable')(this);
     }
     
 
