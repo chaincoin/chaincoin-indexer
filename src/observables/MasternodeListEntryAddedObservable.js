@@ -26,7 +26,7 @@ module.exports = function (chaincoinService) {
       subscription.unsubscribe();
     }
   }).pipe(shareReplay({
-    bufferSize: 1,
+    bufferSize: 0,
     refCount: true
   }));
 
