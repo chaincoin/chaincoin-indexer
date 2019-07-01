@@ -38,7 +38,7 @@ class IndexerService{
     start()
     {
         if (this.bestBlockHashSubscription != null) throw "Service already started";
-        //this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
+        this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
     }
 
     stop()
