@@ -38,7 +38,7 @@ class IndexerService{
     start()
     {
         if (this.bestBlockHashSubscription != null) throw "Service already started";
-        this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
+        //this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
     }
 
     stop()
@@ -296,7 +296,7 @@ class IndexerService{
 
 
         var updateSpentTx = {
-            _id: address + "-" + vinTransaction.txid + "-vout[" + vin.vout + "]",
+            _id: vinTransaction.txid + "-vout[" + vin.vout + "]",
             spent: true
         };
         transactionData.dbAddressTxUpdates.push(updateSpentTx);
