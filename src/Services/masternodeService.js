@@ -18,10 +18,10 @@ class MasternodeService{
     start()
     {
         if (this.masternodeListEntryAddedSubscription != null) throw "Service already started";
-        this.masternodeListEntryAddedSubscription = this.chaincoinService.MasternodeListEntryAdded.subscribe(this.processMasternodeListEntryAdded);
-        this.masternodeListEntryRemovedSubscription = this.chaincoinService.MasternodeListEntryRemoved.subscribe(this.processMasternodeListEntryRemoved);
-        this.masternodeListEntryStatusChangedSubscription = this.chaincoinService.MasternodeListEntryStatusChanged.subscribe(this.processMasternodeListEntryStatusChanged);
-        this.masternodeListEntryExpiringSubscription = this.chaincoinService.MasternodeListEntryExpiring.subscribe(this.processMasternodeListEntryExpiring);
+        this.masternodeListEntryAddedSubscription = this.chaincoinService.MasternodeListEntryAdded.subscribe((mnEntry) => this.processMasternodeListEntryAdded(mnEntry));
+        this.masternodeListEntryRemovedSubscription = this.chaincoinService.MasternodeListEntryRemoved.subscribe((mnEntry) => this.processMasternodeListEntryRemoved(mnEntry));
+        this.masternodeListEntryStatusChangedSubscription = this.chaincoinService.MasternodeListEntryStatusChanged.subscribe((mnEntry) => this.processMasternodeListEntryStatusChanged(mnEntry));
+        this.masternodeListEntryExpiringSubscription = this.chaincoinService.MasternodeListEntryExpiring.subscribe((mnEntry) => this.processMasternodeListEntryExpiring(mnEntry));
     }
 
     stop()
@@ -47,7 +47,9 @@ class MasternodeService{
     async processMasternodeListEntryAdded(mnListEntry){
         try
         {
-            indexApi.saveMasternodeEvent({
+            await this.indexApi.connect();
+
+            await this.indexApi.saveMasternodeEvent({
                 output: mnListEntry.output,
                 time: new Date(),
                 event: "newMasternode"
@@ -64,7 +66,9 @@ class MasternodeService{
     async processMasternodeListEntryRemoved(mnListEntry){
         try
         {
-            indexApi.saveMasternodeEvent({
+            await this.indexApi.connect();
+
+            await this.indexApi.saveMasternodeEvent({
                 output: mnListEntry.output,
                 time: new Date(),
                 event: "removedMasternode"
@@ -81,7 +85,9 @@ class MasternodeService{
     async processMasternodeListEntryStatusChanged(mnListEntry){
         try
         {
-            indexApi.saveMasternodeEvent({
+            await this.indexApi.connect();
+
+            await this.indexApi.saveMasternodeEvent({
                 output: mnListEntry.output,
                 time: new Date(),
                 event: "changedMasternode",
@@ -101,7 +107,9 @@ class MasternodeService{
     async processMasternodeListEntryExpiring(mnListEntry){
         try
         {
-            indexApi.saveMasternodeEvent({
+            await this.indexApi.connect();
+
+            await this.indexApi.saveMasternodeEvent({
                 output: mnListEntry.output,
                 time: new Date(),
                 event: "expiringMasternode"
