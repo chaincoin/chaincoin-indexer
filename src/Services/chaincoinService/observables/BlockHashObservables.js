@@ -4,7 +4,7 @@ const { shareReplay } = require('rxjs/operators');
 
 module.exports = function (chaincoinService) {
 
-  var blockHashObservable = []; //TODO: memory leak
+  var blockHashObservableCache = []; //TODO: memory leak
 
   return (blockId) => {
 
@@ -18,7 +18,7 @@ module.exports = function (chaincoinService) {
         var getBlock = async () => {
           var newBlockHash = await chaincoinService.chaincoinApi.getBlockHash(blockId);
     
-          if (blockHash != newBlockHash) return;
+          if (blockHash == newBlockHash) return;
           blockHash = newBlockHash;
           observer.next(newBlockHash);
         };
@@ -37,6 +37,6 @@ module.exports = function (chaincoinService) {
       blockHashObservable[blockId] = blockHashObservable;
     }
 
-    return blockObservable;
+    return blockHashObservable;
   };
 };
