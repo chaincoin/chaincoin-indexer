@@ -2,7 +2,7 @@ var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
 var { combineLatest } = require('rxjs');
-var { first, catchError, map } = require('rxjs/operators');
+var { first, map } = require('rxjs/operators');
 
 
 class HttpService{
