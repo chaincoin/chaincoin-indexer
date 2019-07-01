@@ -2,18 +2,18 @@ var  ChaincoinService = require('./Services/chaincoinService.js');
 var  MasternodeService = require('./Services/masternodeService');
 var  HttpService = require('./Services/httpService');
 var  ChaincoinApi = require('./chaincoinApi');
-//var  indexApi = require('./indexApi');
+var  IndexApi = require('./indexApi');
 
 
 
 var chaincoinApi = new ChaincoinApi("127.0.0.1",8332, "chaincoin","vjjbuuy754edvowqbnohc7yjb");
-
+var indexApi = new IndexApi(process.env.MONGODBURL || "mongodb://localhost:27017/");
 
 var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
 chaincoinService.start();
 
-//var masternodeService = new MasternodeService(chaincoinService, indexApi);
-//masternodeService.start();
+var masternodeService = new MasternodeService(chaincoinService, indexApi);
+masternodeService.start();
 
 
 var httpService = new HttpService(8080,chaincoinService);
