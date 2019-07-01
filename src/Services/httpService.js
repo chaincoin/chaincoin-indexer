@@ -320,7 +320,7 @@ class WebSocketConnection{
             }
 
             this.subscriptions[observableName].unsubscribe();
-            this.subscriptions[observableName] = null;
+            delete this.subscriptions[observableName];
 
             this.ws.send(JSON.stringify({
                 id: messageId,
