@@ -57,11 +57,7 @@ class MasternodeService{
     {
         try
         {
-            await this.indexApi.saveMasternodeEvent({
-                output: mnListEntry.output,
-                time: new Date(),
-                event: "newMasternode"
-            });
+            await this.indexApi.saveMasternodeEvent(mnEvent);
 
             this.newMasternodeEvent.next(mnEvent);
         }
