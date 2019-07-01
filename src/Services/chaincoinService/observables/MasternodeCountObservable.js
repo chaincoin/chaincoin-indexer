@@ -13,7 +13,7 @@ module.exports = function (chaincoinService) {
 
 
 
-      if (masternodeCount != null && newMasternodeCount == masternodeCount) return;
+      if (masternodeCount != null && JSON.stringify(newMasternodeCount) == JSON.stringify(masternodeCount)) return;
       masternodeCount = newMasternodeCount;
       observer.next(newMasternodeCount);
     };
