@@ -17,7 +17,14 @@ module.exports = function (indexerService) {
 
         var getAddress = async () =>{
           var address = await indexerService.indexApi.getAddress(address);
-          observer.next(address);
+          observer.next(address ||  {
+            address:  address,
+            received: 0,
+            sent: 0,
+            balance: 0,
+            txCount: 0,
+            lastActivity: 0
+          });
         }
     
         var subscription = indexerService.AddressUpdated.subscribe(dbAddress => {
