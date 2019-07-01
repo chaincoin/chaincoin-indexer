@@ -1,8 +1,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var mongodbDecimal = require('mongodb').Decimal128;
 
-var url =  process.env.MONGODBURL || "mongodb://localhost:27017/";
-
+var Big = require('big.js');
 
 
 
@@ -151,4 +150,208 @@ module.exports = function(url) {
     this.getMasternodeEvent = (output,pos) =>{
         return this.connect().then(() => _masternodeEventsCollection.find({"output": output}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 ).toArray().then((items) => items[0]));
     };
+
+    this.saveAddressTxs = (addressTxs) => {
+        return this.connect().then(() => new Promise((resolve, reject) =>
+        {
+            var bulk = this._addressTxsCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < addressTxs.length; i++)
+            {
+                bulk.find({_id:addressTxs[i]._id}).upsert().updateOne(addressTxs[i]);
+            }
+            
+            bulk.execute((err,result)  => {
+    
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    }
+
+    this.saveSpendAddressTxs = (spendAddressTxs) => {
+        return this.connect().then(() => new Promise((resolve, reject)  => 
+        {
+            var bulk = this._addressTxsCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < spendAddressTxs.length; i++)
+            {
+                bulk.find({_id:spendAddressTxs[i]._id}).updateOne({
+                    $set: {
+                        spent : true
+                    }
+                });
+            }
+            
+            bulk.execute((err,result)  => {
+    
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    };
+
+
+    this.getCalculateAddresses = async function(addressIds, blockHeight){
+
+    
+
+        var pipelines = [{ 
+            $match: {
+                "address": {
+                    "$in" : addressIds
+                }
+            }
+        }];
+    
+        if (blockHeight != null)
+        {
+            pipelines.push({ 
+                $match: {
+                    "blockHeight": { 
+                        $lte :blockHeight
+                    }
+                }
+            });   
+        }
+        pipelines.push({ 
+            $group: {
+              _id: {
+                "address": "$address",
+                "type": "$type"
+              }, 
+              value: {
+                $sum: "$value"
+              },
+              lastActivity:{
+                $max: "$time"
+              },
+              count:{
+                  $sum: 1
+              }
+            }
+        });
+    
+        await this.connect();
+        var cursor = await this._addressTxsCollection.aggregate(pipelines);
+        var results = await cursor.toArray();
+    
+    
+        var addresses = [];
+    
+        for(var i = 0; i < addressIds.length; i++)
+        {
+            var addressId = addressIds[i];
+            var address = {
+                address:  addressId,
+                received: null, //
+                sent: null,
+                txCount: 0,
+                lastActivity: 0
+            };
+            addresses.push(address);
+    
+            var voutBalance = null;
+            var vinBalance = null;
+
+            var sent = new Big("0");
+            var received = new Big("0");;
+            
+    
+            results.forEach(function(balance){
+                if (balance._id.type == "vout" && balance._id.address == address.address) voutBalance = balance;
+                else if (balance._id.type == "vin" && balance._id.address == address.address) vinBalance = balance;
+            });
+    
+            if (vinBalance != null)
+            {
+                send = new Big("0").minus(new Big(vinBalance.value.toString()));
+                address.txCount = address.txCount + vinBalance.count;
+                if (address.lastActivity < vinBalance.lastActivity) address.lastActivity = vinBalance.lastActivity;
+            }
+
+    
+            if (voutBalance != null)
+            {
+                received = new Big(voutBalance.value.toString());
+                address.txCount = address.txCount + voutBalance.count;
+                if (address.lastActivity < voutBalance.lastActivity) address.lastActivity = voutBalance.lastActivity;
+            }
+
+    
+            address.balance = mongodbDecimal.fromString(received.minus(sent).toString());
+            address.received = mongodbDecimal.fromString(received.toString())
+            address.sent = mongodbDecimal.fromString(sent.toString())
+        }
+        return addresses;
+    };
+
+    this.saveAddresses = async (addresses) => {
+        return this.connect().then(() =>new Promise((resolve, reject) => 
+        {
+            var bulk = this._addressesCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < addresses.length; i++)
+            {
+                bulk.find({_id:addresses[i]._id}).upsert().updateOne(addresses[i]);
+            }
+            
+            bulk.execute(function(err,result) {
+    
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+        }));
+    };
+
+    this.saveTransactions = (transactions) =>{
+        return this.connect().then(() => new Promise((resolve, reject) => 
+        {
+            var bulk = this._transactionsCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < transactions.length; i++)
+            {
+                bulk.find({_id:transactions[i]._id}).upsert().updateOne(transactions[i]);
+            }
+            
+            bulk.execute(function(err,result) {
+    
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    };
+
+    this.saveBlocks = (blocks) => {
+        return this.connect().then(() => new Promise((resolve, reject) =>
+        {
+            var bulk = this._blocksCollection.initializeOrderedBulkOp();
+    
+            for(var i = 0; i < blocks.length; i++)
+            {
+                bulk.find({_id:blocks[i]._id}).upsert().updateOne(blocks[i]);
+            }
+            
+            bulk.execute(function(err,result) {
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    }
+
+    this.getTopBlock = () =>{
+        return this.connect().then(() => this._blocksCollection.find().sort({_id : -1}).limit(1).toArray().then(data => data[0]));
+    }
 }
