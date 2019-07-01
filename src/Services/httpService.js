@@ -124,10 +124,20 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         
 
         Block:chaincoinService.Block,
-        BlockExtended:(blockHash) => combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash))
-        .pipe(map(([block, dbBlock]) =>{ 
-            return Object.assign({}, block, dbBlock);
-        })),
+        BlockExtended:(hash) => {
+            return combineLatest(chaincoinService.Block(hash),indexerService.Block(hash))
+            .pipe(map(([block, dbBlock]) =>{ 
+                if (dbBlock == null) return block;
+
+                var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(dbBlock.value.toString())}));
+
+                return Object.assign({}, block, dbBlock, {
+                    extended:true,
+                    value: parseFloat(dbBlock.value.toString()),
+                    tx:transaction
+                });
+            }));
+        },
         BlocksExtended:(blockId, pageSize) =>{
             var observables = [];
 
@@ -139,7 +149,7 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 
                             if (dbBlock == null) return block;
 
-                            var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(dbBlock.value.toString())}));
+                            var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
 
                             return Object.assign({}, block, dbBlock, {
                                 extended:true,
@@ -159,7 +169,15 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         Transaction: chaincoinService.Transaction,
         TransactionExtended:(transactionId) => combineLatest(chaincoinService.Transaction(transactionId),indexerService.Transaction(transactionId))
         .pipe(map(([transaction, dbTransaction]) =>{ 
-            return Object.assign({}, transaction, dbTransaction);
+
+            if (dbTransaction == null) return transaction;
+
+            var vin = dbTransaction.vin.map(vin => Object.assign({}, vin,{value: parseFloat(vin.value.toString())}));
+
+            return Object.assign({}, transaction, dbTransaction, {
+                extended:true,
+                vin:vin
+            });
         })),
 
 
