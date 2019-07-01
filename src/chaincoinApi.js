@@ -118,7 +118,7 @@ class ChaincoinApi{
     }
     
     getTransaction(txid) {
-        return this.rpcRequest("getrawtransaction", [txId,1]);
+        return this.rpcRequest("getrawtransaction", [txid,1]);
     }
     
     
