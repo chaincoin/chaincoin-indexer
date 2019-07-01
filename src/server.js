@@ -19,7 +19,7 @@ masternodeService.start();
 var indexerService = new IndexerService(chaincoinService, indexApi);
 indexerService.start();
 
-var httpService = new HttpService(8080,chaincoinService,masternodeService);
+var httpService = new HttpService(8080,chaincoinService,masternodeService,indexerService);
 httpService.start();
 
 
