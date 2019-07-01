@@ -129,27 +129,26 @@ module.exports = function(url) {
 
 
    
-    this.getMasternode = (outputId) => {
-        return this._masternodeEventsCollection.find({"output": output}).count().then(eventCount => {
-            eventCount: eventCount
-        });
-
+    this.getMasternode = (output) => {
+        return this.connect().then(() => this._masternodeEventsCollection.find({"output": output}).count().then(eventCount => {
+            return {
+                eventCount: eventCount
+            }
+        }));
     };
 
     this.saveMasternodeEvent = (masternodeEvent) => {
-        return new Promise((resolve, reject) =>
+
+        return this.connect().then(() => new Promise((resolve, reject) =>
         {
             this._masternodeEventsCollection.insert(masternodeEvent,function(err){
                 if (err == null) resolve();
                 else reject(err);
             });
-        });
-    
+        }));    
     };
     
     this.getMasternodeEvent = (output,pos) =>{
-        var cusor = _masternodeEventsCollection.find({"output": output}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 );
-    
-        return cusor.toArray().then((items) => items[0]);
+        return this.connect().then(() => _masternodeEventsCollection.find({"output": output}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 ).toArray().then((items) => items[0]));
     };
 }

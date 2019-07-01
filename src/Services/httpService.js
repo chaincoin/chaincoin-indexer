@@ -1,25 +1,80 @@
 var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
-var { first, catchError } = require('rxjs/operators');
+var { combineLatest } = require('rxjs');
+var { first, catchError, map } = require('rxjs/operators');
 
 
 class HttpService{
 
 
-    constructor(port, chaincoinService, indexApi) {
+    constructor(port, chaincoinService, masternodeService) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverMethods = chaincoinServiceToMethods(chaincoinService);
-        this.serverObservables = chaincoinServiceToObservables(chaincoinService);
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService);
 
         this.webSockets = [];
 
 
 
 
+        this.start = () => 
+        {
+            if (this.server != null) throw "Service already started";
+            this.server = http.createServer((req, res) => this.handleHttpRequest(req,res));
+            this.wsServer = new WebSocket.Server({ server: this.server });
+            this.wsServer.on('connection',this.handleWsConnection);
+
+            this.server.listen(this.port);
+        }
+
+        this.stop = () => 
+        {
+            if (this.server == null) throw "Service not started";
+            
+        }
+
+        this.isRunning = () => {
+            return this.server != null;
+        }
+
+        this.handleHttpRequest = async(req, res) => 
+        {
+
+            var url_parts = url.parse(req.url, true);
+
+            var observableFuncName = url_parts.pathname.substring(4); 
+            var observableFunc = this.serverObservables[observableFuncName];
+            if (observableFunc == null){
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('\n');
+
+                return;
+            } 
+
+            var observableFuncParamNames = getParamNames(observableFunc);
+
+            var observableFuncParams = observableFuncParamNames.map(function(item){
+                return url_parts.query[item];
+            });
+
+
+            try
+            {
+                var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(data, null, 4) + '\n');
+            }
+            catch(ex)
+            {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('failed\n');
+            }
+
+        }
         
 
         this.handleWsConnection = async(ws)  =>
@@ -31,67 +86,12 @@ class HttpService{
             Object.keys(webSocket.subscriptions).forEach(subscriptionName => webSocket.subscriptions[subscriptionName].unsubscribe());
         }
     }
-    
-
-
-    start()
-    {
-        if (this.server != null) throw "Service already started";
-        this.server = http.createServer((req, res) => this.handleHttpRequest(req,res));
-        this.wsServer = new WebSocket.Server({ server: this.server });
-        this.wsServer.on('connection',this.handleWsConnection);
-
-        this.server.listen(this.port);
-    }
-
-    stop()
-    {
-        if (this.server == null) throw "Service not started";
-        
-    }
-
-    isRunning(){
-        return this.server != null;
-    }
-
-    async handleHttpRequest(req, res)
-    {
-
-        var url_parts = url.parse(req.url, true);
-        var method = url_parts.pathname.substring(1); 
-
-        var processFunc = this.serverMethods[method];
-        if (processFunc == null) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('\n');
-            return;
-        }
-
-        var funcParams = getParamNames(processFunc);
-
-        var parms = funcParams.map(function(item){
-            return url_parts.query[item];
-        });
-
-        try
-        {
-            var data = await processFunc.apply(null,parms);
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(data, null, 4) + '\n');
-        }
-        catch(ex)
-        {
-            res.writeHead(500, { 'Content-Type': 'text/plain' });
-            res.end('failed\n');
-        }
-        
-
-    }
+   
 
 }
 
-var chaincoinServiceToMethods = (chaincoinService) =>{
+/*
+var servicesToMethods = (chaincoinService, masternodeService) =>{
     return {
         ping:() => "pong",
         getBlockCount:() => {
@@ -99,16 +99,27 @@ var chaincoinServiceToMethods = (chaincoinService) =>{
         },
         getBlock:(blockHash) => {
             return chaincoinService.Block(blockHash).pipe(first()).toPromise()
-        }
-    }
-}
+        },
 
-var chaincoinServiceToObservables = (chaincoinService) =>{
+
+        getMasternode:(output) => chaincoinService.MasternodeListEntry(output).pipe(first()).toPromise(),
+        getMasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),).pipe(first()).toPromise(),
+
+    }
+}*/
+
+var servicesToObservables = (chaincoinService, masternodeService) =>{
     return {
-        BlockCount: () => chaincoinService.BlockCount.pipe(catchError(error => of(error))),
+        BlockCount: () => chaincoinService.BlockCount,
         Block:(blockHash) => {
             return chaincoinService.Block(blockHash);
-        }
+        },
+
+        Masternode:(output) => chaincoinService.MasternodeListEntry(output),
+        MasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),masternodeService.Masternode(output))
+            .pipe(map(([mnEntry, mnIndex]) =>{ 
+                return Object.assign({}, mnEntry, mnIndex);
+            }))
     }
 }
 
@@ -251,44 +262,46 @@ class WebSocketConnection{
         }
         
 
-
-        var processFunc = this.httpService.serverMethods[request.op];
-        if (processFunc == null) {
-            this.ws.send(JSON.stringify({
-                id: messageId,
-                op: "Response",
-                data:"method not found",
-                success:false
-            }));
-            return;
-        }
-
-        var funcParams = getParamNames(processFunc);
-
-        var parms = funcParams.map(function(item){
-            return request[item];
-        });
-
-      
-        try{
-
-            var data = await processFunc.apply(null,parms);
-            this.ws.send(JSON.stringify({
-                id: messageId,
-                op: request.op + "Response",
-                data: data,
-                success:true
-            }));
-        }
-        catch(ex)
+        if (request.op.endsWith("get"))
         {
-            this.ws.send(JSON.stringify({
-                id: messageId,
-                op: request.op + "Response",
-                success:false
-            }));
+            var observableFuncName = request.op.substring(3);
+            var observableFunc = this.httpService.serverObservables[observableFuncName];
+            if (observableFunc == null){
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+
+                return;
+            } 
+
+            var observableFuncParamNames = getParamNames(observableFunc);
+
+            var observableFuncParams = observableFuncParamNames.map(function(item){
+                return request[item];
+            });
+
+            try{
+
+                var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    data: data,
+                    success:true
+                }));
+            }
+            catch(ex)
+            {
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+            }
+
         }
-        
 
     }
 }

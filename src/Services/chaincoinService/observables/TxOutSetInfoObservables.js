@@ -1,5 +1,5 @@
-const { Observable, Subject } = require('./node_modules/rxjs');
-const { shareReplay } = require('./node_modules/rxjs/operators');
+const { Observable, Subject } = require('rxjs');
+const { shareReplay } = require('rxjs/operators');
 
 
 

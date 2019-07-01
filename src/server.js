@@ -1,5 +1,5 @@
-var  ChaincoinService = require('./Services/chaincoinService.js');
-var  MasternodeService = require('./Services/masternodeService');
+var  ChaincoinService = require('./Services/chaincoinService/chaincoinService');
+var  MasternodeService = require('./Services/masternodeService/masternodeService');
 var  HttpService = require('./Services/httpService');
 var  ChaincoinApi = require('./chaincoinApi');
 var  IndexApi = require('./indexApi');
@@ -16,7 +16,7 @@ var masternodeService = new MasternodeService(chaincoinService, indexApi);
 masternodeService.start();
 
 
-var httpService = new HttpService(8080,chaincoinService);
+var httpService = new HttpService(8080,chaincoinService,masternodeService);
 httpService.start();
 
 

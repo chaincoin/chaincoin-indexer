@@ -1,16 +1,25 @@
+var  { Subject } = require('rxjs');
+
 class MasternodeService{
 
     
 
     constructor(chaincoinService, indexApi) {
         this.chaincoinService = chaincoinService;
+        this.indexApi = indexApi;
 
+        
         this.onError = null;
         this.masternodeListEntryAddedSubscription = null;
         this.masternodeListEntryRemovedSubscription = null;
         this.masternodeListEntryStatusChangedSubscription = null;
+        this.masternodeListEntryExpiringSubscription = null;
 
-        this.indexApi = indexApi;
+        this.newMasternodeEvent = new Subject();
+
+        
+        this.Masternode = require('./observables/MasternodeObservables')(this);
+        this.MasternodeEvent = require('./observables/MasternodeEventObservables')(this);
     }
     
 
@@ -44,83 +53,62 @@ class MasternodeService{
         return this.masternodeListEntryAddedSubscription != null;
     }
 
-    async processMasternodeListEntryAdded(mnListEntry){
+    async saveMasternodeEvent(mnEvent)
+    {
         try
         {
-            await this.indexApi.connect();
-
             await this.indexApi.saveMasternodeEvent({
                 output: mnListEntry.output,
                 time: new Date(),
                 event: "newMasternode"
             });
+
+            this.newMasternodeEvent.next(mnEvent);
         }
         catch(ex)
         {
             if (this.onError != null) this.onError(ex);
             else console.log(ex);
         }
+    }
+
+    processMasternodeListEntryAdded(mnListEntry){
+
+        this.saveMasternodeEvent({
+            output: mnListEntry.output,
+            time: new Date(),
+            event: "newMasternode"
+        });
         
     }
 
-    async processMasternodeListEntryRemoved(mnListEntry){
-        try
-        {
-            await this.indexApi.connect();
+    processMasternodeListEntryRemoved(mnListEntry){
 
-            await this.indexApi.saveMasternodeEvent({
-                output: mnListEntry.output,
-                time: new Date(),
-                event: "removedMasternode"
-            });
-        }
-        catch(ex)
-        {
-            if (this.onError != null) this.onError(ex);
-            else console.log(ex);
-        }
-        
+        this.saveMasternodeEvent({
+            output: mnListEntry.output,
+            time: new Date(),
+            event: "removedMasternode"
+        });
     }
 
-    async processMasternodeListEntryStatusChanged(mnListEntry){
-        try
-        {
-            await this.indexApi.connect();
-
-            await this.indexApi.saveMasternodeEvent({
-                output: mnListEntry.output,
-                time: new Date(),
-                event: "changedMasternode",
-                oldStatus: mnListEntry.oldState.status,
-                newStatus: mnListEntry.newState.status
-            });
-        }
-        catch(ex)
-        {
-            if (this.onError != null) this.onError(ex);
-            else console.log(ex);
-        }
-        
+    processMasternodeListEntryStatusChanged(mnListEntry){
+        this.saveMasternodeEvent({
+            output: mnListEntry.output,
+            time: new Date(),
+            event: "changedMasternode",
+            oldStatus: mnListEntry.oldState.status,
+            newStatus: mnListEntry.newState.status
+        });  
     }
 
 
-    async processMasternodeListEntryExpiring(mnListEntry){
-        try
-        {
-            await this.indexApi.connect();
+    processMasternodeListEntryExpiring(mnListEntry){
 
-            await this.indexApi.saveMasternodeEvent({
-                output: mnListEntry.output,
-                time: new Date(),
-                event: "expiringMasternode"
-            });
-        }
-        catch(ex)
-        {
-            if (this.onError != null) this.onError(ex);
-            else console.log(ex);
-        }
-        
+        this.saveMasternodeEvent({
+            output: mnListEntry.output,
+            time: new Date(),
+            event: "expiringMasternode"
+        });  
     }
 
 }
