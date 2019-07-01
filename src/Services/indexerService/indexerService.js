@@ -5,7 +5,7 @@ var Big = require('big.js');
 var  { Subject } = require('rxjs');
 var { first, filter  } = require('rxjs/operators');
 
-class ChaincoinIndexerService{
+class IndexerService{
 
     
 
@@ -27,6 +27,10 @@ class ChaincoinIndexerService{
         this.AddressUpdated = new Subject();
         
 
+        this.Block = require('./Observables/BlockObservables')(this);
+        this.Transaction = require('./Observables/TransactionObservables')(this);
+        this.Address = require('./Observables/AddressObservables')(this);
+        this.AddressTx = require('./Observables/AddressTxObservables')(this);
     }
     
 
@@ -186,7 +190,7 @@ class ChaincoinIndexerService{
 
         var blockData = {
             dbBlock : {
-                _id: block.height,
+                _id: block.hash,
                 hash: block.hash,
                 difficulty: block.difficulty,
                 hashRate: hashRate,
@@ -345,4 +349,4 @@ class ChaincoinIndexerService{
 }
 
 
-module.exports = ChaincoinIndexerService;
+module.exports = IndexerService;
