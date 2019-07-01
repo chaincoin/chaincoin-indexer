@@ -14,17 +14,21 @@ module.exports = function (masternodeService) {
       masternodeEventObservable = Observable.create(function (observer) {
 
    
+
+
+        var masternodeEvent = null;
         var getMasternodeEvent = async () =>{
           var masternodeEvent = await masternodeService.indexApi.getMasternodeEvent(output, pos);
-
           observer.next(masternodeEvent);
         }
-
-        getMasternodeEvent();
+    
+        var subscription = masternodeService.indexApi.Masternode(output).subscribe(dbMasternode => {
+          if (masternodeEvent == null && dbMasternode.eventCount > pos) getMasternodeEvent();
+        });
 
 
         return () => {
-          
+          subscription.unsubscribe();
         }
       }).pipe(shareReplay({
         bufferSize: 1,
