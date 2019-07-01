@@ -8,12 +8,12 @@ var { first, map } = require('rxjs/operators');
 class HttpService{
 
 
-    constructor(port, chaincoinService, masternodeService) {
+    constructor(port, chaincoinService, masternodeService, indexerService) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverObservables = servicesToObservables(chaincoinService, masternodeService);
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService);
 
         this.webSockets = [];
 
@@ -93,7 +93,7 @@ class HttpService{
 }
 
 
-var servicesToObservables = (chaincoinService, masternodeService) =>{
+var servicesToObservables = (chaincoinService, masternodeService, indexerService) =>{
     return {
 
         NewBlockHash: () => chaincoinService.NewBlockHash,
@@ -124,9 +124,22 @@ var servicesToObservables = (chaincoinService, masternodeService) =>{
         
 
         Block:chaincoinService.Block,
+        BlockExtended:(blockHash) => combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash))
+        .pipe(map(([block, dbBlock]) =>{ 
+            return Object.assign({}, block, dbBlock);
+        })),
+
         BlockHash:chaincoinService.BlockHash,
 
         Transaction: chaincoinService.Transaction,
+        TransactionExtended:(transactionId) => combineLatest(chaincoinService.Transaction(transactionId),indexerService.Transaction(transactionId))
+        .pipe(map(([transaction, dbTransaction]) =>{ 
+            return Object.assign({}, transaction, dbTransaction);
+        })),
+
+
+        Address: indexerService.Address,
+        AddressTx: indexerService.AddressTx,
 
         MasternodeListEntryAdded: () => chaincoinService.MasternodeListEntryAdded,
         MasternodeListEntryRemoved: () => chaincoinService.MasternodeListEntryRemoved,
