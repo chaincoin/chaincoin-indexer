@@ -25,9 +25,9 @@ module.exports = function(url) {
     this._connectPromise = null;
 
     this.connect = () =>{
-        if (this._connectPromise == null) this._connectPromise = new Promise(function(resolve,reject)
+        if (this._connectPromise == null) this._connectPromise = new Promise((resolve,reject) =>
         {
-            MongoClient.connect(url, function(err, db) {
+            MongoClient.connect(url, (err, db)  =>{
                 if (err) throw err;
         
                 _db = db;
@@ -41,51 +41,51 @@ module.exports = function(url) {
                 var createMasternodesPromise = _dbo.createCollection("masternodes");
                 var createMasternodeEventsPromise = _dbo.createCollection("masternodeEvents");
             
-                createBlocksPromise.then(function(blocksCollection){
+                createBlocksPromise.then((blocksCollection) => {
                     this._blocksCollection = blocksCollection;
-                    return Promise.all([_blocksCollection.createIndex({hash:1}),_blocksCollection.createIndex({date:1})]);
+                    return Promise.all([this._blocksCollection.createIndex({hash:1}),this._blocksCollection.createIndex({date:1})]);
                 });
             
             
-                createTransactionsPromise.then(function(transactionsCollection){
+                createTransactionsPromise.then((transactionsCollection) => {
                     this._transactionsCollection = transactionsCollection;
                 });
                 
-                createAddressesPromise.then(function(addressesCollection){
+                createAddressesPromise.then((addressesCollection)  =>{
                     this._addressesCollection = addressesCollection;
         
-                    var lastAcitivityIndex = _addressesCollection.createIndex({lastActivity:1, balance: 1});
-                    var richListIndexPromise = _addressesCollection.createIndex({balance: -1, time:1});
+                    var lastAcitivityIndex = this._addressesCollection.createIndex({lastActivity:1, balance: 1});
+                    var richListIndexPromise = this._addressesCollection.createIndex({balance: -1, time:1});
                     //create dormant index
                     return Promise.all([lastAcitivityIndex,richListIndexPromise]);
                 });
         
-                createAddressTxsPromise.then(function(addressTxsCollection){
+                createAddressTxsPromise.then((addressTxsCollection) => {
                     this._addressTxsCollection = addressTxsCollection;
         
-                    var addressTxIndexPromise = _addressTxsCollection.createIndex({address:1, type:1});
-                    var addressTxComputeIndexPromise = _addressTxsCollection.createIndex({address:1, blockHeight:1, type:1 });
-                    var getAddressTxIndexPromise = _addressTxsCollection.createIndex({address:1, time:1});
-                    var addressTxPayoutsIndexPromise = _addressTxsCollection.createIndex({address:1, payout:1, time:1 }, { partialFilterExpression: { payout: { $in: ["masternode","miner"] } } });
-                    //var addressUnspentTxIndexPromise = _addressTxsCollection.createIndex({address:1, time:1}, { name: "addressUnspentTxIndex", partialFilterExpression: { spent: { $eq: false }, type: { $eq: "vout" } } });
+                    var addressTxIndexPromise = this._addressTxsCollection.createIndex({address:1, type:1});
+                    var addressTxComputeIndexPromise = this._addressTxsCollection.createIndex({address:1, blockHeight:1, type:1 });
+                    var getAddressTxIndexPromise = this._addressTxsCollection.createIndex({address:1, time:1});
+                    var addressTxPayoutsIndexPromise = this._addressTxsCollection.createIndex({address:1, payout:1, time:1 }, { partialFilterExpression: { payout: { $in: ["masternode","miner"] } } });
+                    //var addressUnspentTxIndexPromise = this._addressTxsCollection.createIndex({address:1, time:1}, { name: "addressUnspentTxIndex", partialFilterExpression: { spent: { $eq: false }, type: { $eq: "vout" } } });
                     
                     return Promise.all([addressTxIndexPromise,getAddressTxIndexPromise,addressTxComputeIndexPromise,addressTxPayoutsIndexPromise]); 
                 });
         
         
-                createOpReturnsPromise.then(function(opReturnsCollection){
+                createOpReturnsPromise.then((opReturnsCollection) => {
                     this._opReturnsCollection = opReturnsCollection;
         
-                    return _opReturnsCollection.createIndex({time:1});
+                    return this._opReturnsCollection.createIndex({time:1});
                 });
         
-                createMasternodesPromise.then(function(masternodesCollection){
+                createMasternodesPromise.then((masternodesCollection) => {
                     this._masternodesCollection = masternodesCollection;
-                    return _masternodesCollection.createIndex({output:1, time:1});
+                    return this._masternodesCollection.createIndex({output:1, time:1});
                 });
                 
         
-                createMasternodeEventsPromise.then(function(masternodeEventsCollection){
+                createMasternodeEventsPromise.then((masternodeEventsCollection) => {
                     this._masternodeEventsCollection = masternodeEventsCollection;
                 });
             
@@ -111,9 +111,9 @@ module.exports = function(url) {
     }
 
 
-    this.disconnect = function(){
+    this.disconnect = () =>{
 
-        return new Promise(function(resolve, reject)
+        return new Promise((resolve, reject) =>
         {
             _db.close(false,function(err){
                 if (err == null) resolve();
@@ -129,7 +129,7 @@ module.exports = function(url) {
 
 
    
-    this.getMasternode = function(outputId){
+    this.getMasternode = (outputId) => {
         return this._masternodeEventsCollection.find({"output": output}).count().then(eventCount => {
             eventCount: eventCount
         });
