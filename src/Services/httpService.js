@@ -2,7 +2,7 @@ var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
 var { combineLatest } = require('rxjs');
-var { first, map } = require('rxjs/operators');
+var { first, map, switchMap } = require('rxjs/operators');
 
 
 class HttpService{
@@ -128,6 +128,31 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         .pipe(map(([block, dbBlock]) =>{ 
             return Object.assign({}, block, dbBlock);
         })),
+        BlocksExtended:(blockId, pageSize) =>{
+            var observables = [];
+
+            for(var i = 0; i < pageSize; i++)
+            {
+                observables.push(chaincoinService.BlockHash(blockId - i).pipe(
+                    switchMap(blockHash => {
+                        return combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(map(([block, dbBlock]) =>{ 
+
+                            if (dbBlock == null) return block;
+
+                            var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(dbBlock.value.toString())}));
+
+                            return Object.assign({}, block, dbBlock, {
+                                extended:true,
+                                value: parseFloat(dbBlock.value.toString()),
+                                tx:transaction
+                            });
+                        }))
+                    })
+                ));
+            }
+
+            return combineLatest(observables);
+        },
 
         BlockHash:chaincoinService.BlockHash,
 
