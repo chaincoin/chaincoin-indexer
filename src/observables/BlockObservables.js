@@ -23,12 +23,13 @@ module.exports = function (chaincoinService) {
     
             if (block != null && JSON.stringify(newBlock) == JSON.stringify(block)) return;
             block = newBlock;
-            observer.next(newBlock);
           }
           catch(ex)
           {
             observer.error(ex);
           }
+
+          observer.next(newBlock);
           
         };
     
