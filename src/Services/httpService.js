@@ -96,15 +96,15 @@ class HttpService{
 var servicesToObservables = (chaincoinService, masternodeService) =>{
     return {
         BlockCount: () => chaincoinService.BlockCount,
-        Block:(blockHash) => chaincoinService.Block(blockHash),
+        Block:chaincoinService.Block,
 
 
-        NetworkHashps:(blockHash) => chaincoinService.NetworkHashps(blockHash),
-        TxOutSetInfo:(blockHash) => chaincoinService.TxOutSetInfo(blockHash),
+        NetworkHashps:chaincoinService.NetworkHashps,
+        TxOutSetInfo:chaincoinService.TxOutSetInfo,
 
         MasternodeCount:() => chaincoinService.MasternodeCount,
         MasternodeList:() => chaincoinService.MasternodeList,
-        Masternode:(output) => chaincoinService.MasternodeListEntry(output),
+        Masternode: chaincoinService.MasternodeListEntry,
         MasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),masternodeService.Masternode(output))
             .pipe(map(([mnEntry, mnIndex]) =>{ 
                 return Object.assign({}, mnEntry, mnIndex);
