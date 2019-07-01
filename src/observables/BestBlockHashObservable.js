@@ -19,7 +19,7 @@ module.exports = function(chaincoinService){
         }
 
 
-        var newBlockHashSubscription = chaincoinService.NewBlockHash.subscribe(async ({topic,message,sequence}) =>{
+        var newBlockHashSubscription = chaincoinService.NewBlockHash.subscribe(async (newBlockHash) =>{
             checkBestBlockHash();
         });
 
