@@ -17,7 +17,7 @@ module.exports = function (chaincoinService) {
         var networkHashps = null;
 
         var getNetworkHashps = async () => {
-          var newNetworkHashps = await chaincoinService.chaincoinApi.getNetworkHashps();
+          var newNetworkHashps = await chaincoinService.chaincoinApi.getNetworkHashps(blockHash);
 
           if (newNetworkHashps == networkHashps) return;
           networkHashps = newNetworkHashps;
