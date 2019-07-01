@@ -1,5 +1,5 @@
-const  { Observable, Subject  } = require('rxjs');
-const  { shareReplay, combineAll  } = require('rxjs/operators');
+const  { Observable, Subject  } = require('./node_modules/rxjs');
+const  { shareReplay, combineAll  } = require('./node_modules/rxjs/operators');
 
   
 module.exports = function(chaincoinService){
