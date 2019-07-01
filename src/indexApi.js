@@ -354,4 +354,36 @@ module.exports = function(url) {
     this.getTopBlock = () =>{
         return this.connect().then(() => this._blocksCollection.find().sort({_id : -1}).limit(1).toArray().then(data => data[0]));
     }
+
+    this.getBlock = (hash) => {
+        return  this.connect().then(() => this._blocksCollection.findOne({"hash":hash}))
+    }
+
+    this.getTransaction = (txid) => {
+        return  this.connect().then(() => this._transactionsCollection.findOne({"_id":txid}))
+    }
+
+    this.getAddress = (address) => {
+        return  this.connect().then(() => this._addressesCollection.findOne({_id: address}))
+    }
+
+    this.getAddressTx = (address, pos) => {
+        return  this.connect().then(() => {
+            var cusor = _addressTxsCollection.find({"address": address}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 );
+
+            return cusor.toArray().then(function(items){
+                return items[0];
+            });
+        });
+    }
+
+    this.getAddressUnspent = (address) => {
+        return  this.connect().then(() => {
+            var cusor = _addressTxsCollection.find({"address": address, type:"vout",spent: false}).sort( { time: 1 } );
+
+            return cusor.toArray().then(function(items){
+                return items.reverse();
+            });
+        });
+    }
 }
