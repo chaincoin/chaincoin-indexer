@@ -95,21 +95,43 @@ class HttpService{
 
 var servicesToObservables = (chaincoinService, masternodeService) =>{
     return {
+
+        NewBlockHash: () => chaincoinService.NewBlockHash,
+        NewTransactionHash: () => chaincoinService.NewTransactionHash,
+
+        BestBlockHash: () => chaincoinService.BestBlockHash,
+        BlockchainInfo: () => chaincoinService.BlockchainInfo,
         BlockCount: () => chaincoinService.BlockCount,
-        Block:chaincoinService.Block,
-
-
+        ChainTxStats:chaincoinService.ChainTxStats,
         NetworkHashps:chaincoinService.NetworkHashps,
         TxOutSetInfo:chaincoinService.TxOutSetInfo,
+        EstimateSmartFee: chaincoinService.EstimateSmartFee,
+        MemPoolInfo: () => chaincoinService.MemPoolInfo,
+
+        PeerInfo:() => chaincoinService.PeerInfo,
+        ConnectoinCount:() => chaincoinService.ConnectoinCount,
 
         MasternodeCount:() => chaincoinService.MasternodeCount,
         MasternodeList:() => chaincoinService.MasternodeList,
         Masternode: chaincoinService.MasternodeListEntry,
         MasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),masternodeService.Masternode(output))
-            .pipe(map(([mnEntry, mnIndex]) =>{ 
-                return Object.assign({}, mnEntry, mnIndex);
-            })),
+        .pipe(map(([mnEntry, mnIndex]) =>{ 
+            return Object.assign({}, mnEntry, mnIndex);
+        })),
+        MasternodeWinners: () => chaincoinService.MasternodeWinners,
+
+
         
+
+        Block:chaincoinService.Block,
+        BlockHash:chaincoinService.BlockHash,
+
+        Transaction: chaincoinService.Transaction,
+
+        MasternodeListEntryAdded: () => chaincoinService.MasternodeListEntryAdded,
+        MasternodeListEntryRemoved: () => chaincoinService.MasternodeListEntryRemoved,
+        MasternodeListEntryStatusChanged: () => chaincoinService.MasternodeListEntryStatusChanged,
+        MasternodeListEntryExpiring: () => chaincoinService.MasternodeListEntryExpiring
     }
 }
 
