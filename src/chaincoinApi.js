@@ -1,41 +1,5 @@
 const http = require('http');
-
-
-
-/*
-module.exports.getBlocks = async function (blockId, pageSize, priority) {
-
-    if (blockId == null || isNaN(blockId))
-    {
-        return new apiServer.ServiceResponse(400);
-    }
-
-    priority = getPriority(priority);
-
-    var blocks = [];
-
-    blockId = parseInt(blockId);
-    pageSize = parseInt(pageSize);
-
-
-    if (pageSize == null || isNaN(pageSize)) pageSize = 10;
-    if (pageSize > 10000) pageSize = 10000;
-
-
-    var nextBlockHash = await internalGetBlockHash(parseInt(blockId), priority);
-
-    for(var i = 0; i < pageSize; i++)
-    {
-        var block = await internalGetBlock(nextBlockHash, priority);
-        nextBlockHash = block.previousblockhash;
-
-        blocks.push(block);
-    }
-
-    return  new apiServer.ServiceResponse(200, blocks);
-};*/
-
-
+const pLimit = require('p-limit');
 
 
 
@@ -52,9 +16,8 @@ class ChaincoinApi{
         this.rpcUser = rpcUser;
         this.rpcPassword = rpcPassword;
 
-        this.previousRpcRequestPromise = Promise.resolve();
 
-        this.rpcLimit = 10;
+        this.rpcLimit = pLimit(10);
     }
 
     getBestBlockHash() {
@@ -200,84 +163,65 @@ class ChaincoinApi{
     rpcRequest(method, params){
 
 
-        var finallyFunc = null;
-        var promise = new Promise((resolve, reject) =>{
-            finallyFunc = resolve;
-        });
-
-
-
-
-        var dataPromise = this.previousRpcRequestPromise.then(() =>{
-            return new Promise((resolve, reject) => {
-                var auth = 'Basic ' + Buffer.from(this.rpcUser + ':' + this.rpcPassword).toString('base64');
-        
-        
-                var headers = {
-                    'User-Agent': 'Super Agent/0.0.1',
-                    'Content-Type': 'application/json-rpc',
-                    'Accept': 'application/json-rpc',
-                    'Authorization': auth
-                }
-        
-                var options = {
-                    hostname: this.rpcHost,
-                    port: this.rpcPort,
-                    method: 'POST',
-                    headers: headers
-                };
-        
-                var req = http.request(options, (resp) => {
-                    var data = '';
-        
-                    if (resp.statusCode != 200) console.log("statusCode: ", resp.statusCode);
-        
-                    // A chunk of data has been recieved.
-                    resp.on('data', (chunk) => {
-                        data += chunk;
-                    });
-        
-                    // The whole response has been received. Print out the result.
-                    resp.on('end', () => {
-        
-                        try
-                        {
-                            var result = JSON.parse(data);
-                            if (result.error != null) reject(result.error);
-                            else resolve(result.result);
-                        }
-                        catch(ex)
-                        {
-                            reject(ex);
-                        }
-                        
-                    });
-        
-        
-        
-                }).on("error", (err) => {
-                    reject("Error: " + err.message);
-                });
-        
-                req.write(JSON.stringify({
-                    jsonrpc: '1.0',
-                    method: method,
-                    params: params,
-                    id: 1
-                }));
-        
-                req.end();
-            }).finally(finallyFunc);
-        });
-
-        this.previousRpcRequestPromise = this.previousRpcRequestPromise.then(()=>{
-            return promise;
-        })
-        
-
-
+        return this.rpcLimit(() =>new Promise((resolve, reject) => {
+            var auth = 'Basic ' + Buffer.from(this.rpcUser + ':' + this.rpcPassword).toString('base64');
     
-        return dataPromise;
+    
+            var headers = {
+                'User-Agent': 'Super Agent/0.0.1',
+                'Content-Type': 'application/json-rpc',
+                'Accept': 'application/json-rpc',
+                'Authorization': auth
+            }
+    
+            var options = {
+                hostname: this.rpcHost,
+                port: this.rpcPort,
+                method: 'POST',
+                headers: headers
+            };
+    
+            var req = http.request(options, (resp) => {
+                var data = '';
+    
+                if (resp.statusCode != 200) console.log("statusCode: ", resp.statusCode);
+    
+                // A chunk of data has been recieved.
+                resp.on('data', (chunk) => {
+                    data += chunk;
+                });
+    
+                // The whole response has been received. Print out the result.
+                resp.on('end', () => {
+    
+                    try
+                    {
+                        var result = JSON.parse(data);
+                        if (result.error != null) reject(result.error);
+                        else resolve(result.result);
+                    }
+                    catch(ex)
+                    {
+                        reject(ex);
+                    }
+                    
+                });
+    
+    
+    
+            }).on("error", (err) => {
+                reject("Error: " + err.message);
+            });
+    
+            req.write(JSON.stringify({
+                jsonrpc: '1.0',
+                method: method,
+                params: params,
+                id: 1
+            }));
+    
+            req.end();
+        }));
     }
 
 }
