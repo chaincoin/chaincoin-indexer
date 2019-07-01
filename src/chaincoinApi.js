@@ -53,6 +53,8 @@ class ChaincoinApi{
         this.rpcPassword = rpcPassword;
 
         this.previousRpcRequestPromise = Promise.resolve();
+
+        this.rpcLimit = 10;
     }
 
     getBestBlockHash() {
@@ -197,10 +199,12 @@ class ChaincoinApi{
 
     rpcRequest(method, params){
 
+
         var finallyFunc = null;
         var promise = new Promise((resolve, reject) =>{
             finallyFunc = resolve;
         });
+
 
 
 
