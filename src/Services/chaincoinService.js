@@ -96,6 +96,6 @@ class ChaincoinService{
     }
 
 
-  }
-  module.exports = ChaincoinService;
+}
+module.exports = ChaincoinService;
 
