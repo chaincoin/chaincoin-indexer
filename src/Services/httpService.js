@@ -1,7 +1,7 @@
 var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
-var { first } = require('rxjs/operators');
+var { first, catchError } = require('rxjs/operators');
 
 
 class HttpService{
@@ -105,7 +105,7 @@ var chaincoinServiceToMethods = (chaincoinService) =>{
 
 var chaincoinServiceToObservables = (chaincoinService) =>{
     return {
-        BlockCount: () => chaincoinService.BlockCount,
+        BlockCount: () => chaincoinService.BlockCount.pipe(catchError(error => of(error))),
         Block:(blockHash) => {
             return chaincoinService.Block(blockHash);
         }
@@ -152,7 +152,15 @@ class WebSocketConnection{
         {
             var observableFuncName = request.op.substring(0, request.op.length - 9);
             var observableFunc = this.httpService.serverObservables[observableFuncName];
-            if (observableFunc == null)return
+            if (observableFunc == null){
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+
+                return;
+            } 
 
             var observableFuncParamNames = getParamNames(observableFunc);
 
@@ -163,15 +171,31 @@ class WebSocketConnection{
             var observableName = observableFuncName;
             observableFuncParams.forEach(observableFuncParam => observableName = observableFuncName + "-" + observableFuncParam);
 
-            if (this.subscriptions[observableName] != null) return;
+            if (this.subscriptions[observableName] != null){
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+
+                return;
+            } 
 
             this.subscriptions[observableName] = observableFunc.apply(null,observableFuncParams).subscribe((data)=>{
+                if (data == null) return; //TODO: handle errors better
                 this.ws.send(JSON.stringify({
+                    subscriptionId: request.subscriptionId,
                     op: observableFuncName,
                     data: data
                 }));
             },(err) =>{
-                
+                this.ws.send(JSON.stringify({
+                    subscriptionId: request.subscriptionId,
+                    op: observableFuncName,
+                    error: "An error caused subscription to be terminated"
+                }));
+
+                this.subscriptions[observableName] = null;
             });
 
             this.ws.send(JSON.stringify({
@@ -186,7 +210,15 @@ class WebSocketConnection{
         {
             var observableFuncName = request.op.substring(0, request.op.length - 11);
             var observableFunc = this.httpService.serverObservables[observableFuncName];
-            if (observableFunc == null)return
+            if (observableFunc == null){
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+
+                return;
+            } 
 
             var observableFuncParamNames = getParamNames(observableFunc);
 
@@ -197,7 +229,15 @@ class WebSocketConnection{
             var observableName = observableFuncName;
             observableFuncParams.forEach(observableFuncParam => observableName = observableFuncName + "-" + observableFuncParam);
 
-            if (this.subscriptions[observableName] == null) return;
+            if (this.subscriptions[observableName] == null) {
+                this.ws.send(JSON.stringify({
+                    id: messageId,
+                    op: request.op + "Response",
+                    success:false
+                }));
+
+                return;
+            }
 
             this.subscriptions[observableName].unsubscribe();
             this.subscriptions[observableName] = null;
