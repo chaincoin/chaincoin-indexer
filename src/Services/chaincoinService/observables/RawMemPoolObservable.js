@@ -1,5 +1,5 @@
-const  { Observable, Subject  } = require('rxjs');
-const  { shareReplay, combineAll  } = require('rxjs/operators');
+const  { Observable, Subject, combineLatest  } = require('rxjs');
+const  { shareReplay  } = require('rxjs/operators');
 
   
 module.exports = function(chaincoinService){
@@ -10,7 +10,7 @@ module.exports = function(chaincoinService){
 
 
         var getRawMemPool = async () =>{
-            var newRawMemPool = await chaincoinService.chaincoinApi.getMemPoolInfo();
+            var newRawMemPool = await chaincoinService.chaincoinApi.getRawMemPool();
 
             if (rawMemPool != null && JSON.stringify(newRawMemPool) == JSON.stringify(rawMemPool)) return;
 
@@ -19,7 +19,7 @@ module.exports = function(chaincoinService){
         }
 
 
-        var subscription = combineAll(chaincoinService.NewBlockHash,chaincoinService.NewTransactionHash).subscribe(() =>{
+        var subscription = combineLatest(chaincoinService.NewBlockHash,chaincoinService.NewTransactionHash).subscribe(() =>{
             getRawMemPool();
         });
 
