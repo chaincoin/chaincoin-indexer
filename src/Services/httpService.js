@@ -42,6 +42,8 @@ class HttpService{
 
         this.handleHttpRequest = async(req, res) => 
         {
+            res.setHeader('Access-Control-Allow-Origin', '*');//TODO: this might need to change
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 
             var url_parts = url.parse(req.url, true);
 
@@ -90,36 +92,24 @@ class HttpService{
 
 }
 
-/*
-var servicesToMethods = (chaincoinService, masternodeService) =>{
-    return {
-        ping:() => "pong",
-        getBlockCount:() => {
-            return chaincoinService.BlockCount.pipe(first()).toPromise()
-        },
-        getBlock:(blockHash) => {
-            return chaincoinService.Block(blockHash).pipe(first()).toPromise()
-        },
-
-
-        getMasternode:(output) => chaincoinService.MasternodeListEntry(output).pipe(first()).toPromise(),
-        getMasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),).pipe(first()).toPromise(),
-
-    }
-}*/
 
 var servicesToObservables = (chaincoinService, masternodeService) =>{
     return {
         BlockCount: () => chaincoinService.BlockCount,
-        Block:(blockHash) => {
-            return chaincoinService.Block(blockHash);
-        },
+        Block:(blockHash) => chaincoinService.Block(blockHash),
 
+
+        NetworkHashps:(blockHash) => chaincoinService.NetworkHashps(blockHash),
+        TxOutSetInfo:(blockHash) => chaincoinService.TxOutSetInfo(blockHash),
+
+        MasternodeCount:() => chaincoinService.MasternodeCount,
+        MasternodeList:() => chaincoinService.MasternodeList,
         Masternode:(output) => chaincoinService.MasternodeListEntry(output),
         MasternodeExtended:(output) => combineLatest(chaincoinService.MasternodeListEntry(output),masternodeService.Masternode(output))
             .pipe(map(([mnEntry, mnIndex]) =>{ 
                 return Object.assign({}, mnEntry, mnIndex);
-            }))
+            })),
+        
     }
 }
 
@@ -262,7 +252,7 @@ class WebSocketConnection{
         }
         
 
-        if (request.op.endsWith("get"))
+        if (request.op.startsWith("get"))
         {
             var observableFuncName = request.op.substring(3);
             var observableFunc = this.httpService.serverObservables[observableFuncName];
