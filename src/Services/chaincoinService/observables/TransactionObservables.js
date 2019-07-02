@@ -1,41 +1,29 @@
-const { Observable, Subject } = require('rxjs');
-const { shareReplay } = require('rxjs/operators');
+const { Observable, Subject, from } = require('rxjs');
+const { shareReplay, switchMap, map } = require('rxjs/operators');
 
 
 module.exports = function (chaincoinService) {
 
-  var transactionObservableCache = []; //TODO: memory leak
+  var cache = chaincoinService.BestBlockHash.pipe(
+    map(bestBlockHash => {
+      return {};
+    }),
+    shareReplay({
+      bufferSize: 1,
+      refCount: false
+    })
+  );
 
   return (transactionId) => {
 
-    var transactionObservable = transactionObservableCache[transactionId];
-    if (transactionObservable == null)
-    {
-      transactionObservable = Observable.create(function (observer) {
-
-        var transaction = null;
-    
-        var getTransaction = async () => {
-          var newTransaction = await chaincoinService.chaincoinApi.getTransaction(transactionId);
-    
-          if (transaction != null && JSON.stringify(newTransaction) == JSON.stringify(transaction)) return;
-          transaction = newTransaction;
-          observer.next(newTransaction);
-        };
-    
-        var bestBlockHashSubscription = chaincoinService.BestBlockHash.subscribe(bestBlockHash => getTransaction());
-    
-        return () => {
-          bestBlockHashSubscription.unsubscribe();
+    return cache.pipe(
+      switchMap(cache =>{
+        if (cache[transactionId] == null){
+          var promise = chaincoinService.chaincoinApi.getTransaction(transactionId);
+          cache[transactionId] = promise;
         }
-      }).pipe(shareReplay({
-        bufferSize: 1,
-        refCount: true
-      }));
-
-      transactionObservableCache[transactionId] = transactionObservable;
-    }
-
-    return transactionObservable;
+        return cache[transactionId];
+      })
+    )
   };
 };
