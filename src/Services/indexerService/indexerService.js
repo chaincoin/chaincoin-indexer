@@ -99,7 +99,7 @@ class IndexerService{
             var blockDataPromises = newBlocks.map(newBlock => this.ProcessBlock(newBlock));
             var blockDatas = await Promise.all(blockDataPromises);
 
-            this.SaveBlockDatas(blockDatas);
+            await this.SaveBlockDatas(blockDatas);
 
             if (newBlocks.length > 0) this.currentBlockHash = newBlocks[newBlocks.length - 1].hash;
 
