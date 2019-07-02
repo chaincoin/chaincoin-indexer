@@ -5,23 +5,28 @@ const { shareReplay } = require('rxjs/operators');
 module.exports = function (indexerService) {
 
   var observableCache = {}; //TODO: memory leak
+  var cache = {};
 
-  return (blockHash) => {
+  return (hash) => {
 
-    var observable = observableCache[blockHash];
+    var observable = observableCache[hash];
     if (observable == null)
     {
-      
+      var expiryTimer = null;
+
       observable = Observable.create(function (observer) {
 
+        clearTimeout(expiryTimer);
+        expiryTimer = null;
 
         var getBlock = async () =>{
-          var block = await indexerService.indexApi.getBlock(blockHash);
+          var block = await indexerService.indexApi.getBlock(hash);
+          cache[hash] = block;
           observer.next(block);
         }
     
         var subscription = indexerService.BlockAdded.subscribe(dbBlock => {
-          if (blockHash == dbBlock.hash) observer.next(dbBlock);
+          if (hash == dbBlock.hash) observer.next(dbBlock);
         });
 
         getBlock();
@@ -29,13 +34,14 @@ module.exports = function (indexerService) {
 
         return () => {
           subscription.unsubscribe();
+          expiryTimer = setTimeout(() => delete cache[hash], 90000); //clear cached data after 90 seconds of not being accessed
         }
       }).pipe(shareReplay({
         bufferSize: 1,
         refCount: true
       }));
 
-      observableCache[blockHash] = observable;
+      observableCache[hash] = observable;
     }
 
     return observable;
