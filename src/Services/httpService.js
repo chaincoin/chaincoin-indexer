@@ -2,7 +2,7 @@ var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
 var { combineLatest } = require('rxjs');
-var { first, map, switchMap } = require('rxjs/operators');
+var { first, map, switchMap, combineAll } = require('rxjs/operators');
 
 
 class HttpService{
@@ -139,31 +139,32 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
                 });
             }));
         },
-        BlocksExtended:(blockId, pageSize) =>{
-            var observables = [];
-
-            for(var i = 0; i < pageSize; i++)
-            {
-                observables.push(chaincoinService.BlockHash(blockId - i).pipe(
-                    switchMap(blockHash => {
-                        return combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(map(([block, dbBlock]) =>{ 
-
-                            if (dbBlock == null) return block;
-
-                            var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
-
-                            return Object.assign({}, block, dbBlock, {
-                                extended:true,
-                                value: parseFloat(dbBlock.value.toString()),
-                                tx:transaction
-                            });
-                        }))
-                    })
-                ));
-            }
-
-            return combineLatest(observables);
-        },
+        BlocksExtended:(blockId, pageSize) =>chaincoinService.BestBlockHash.pipe(
+            switchMap(bestBlockHash =>{
+                var observables = [];
+                for(var i = 0; i < pageSize; i++)
+                {
+                    observables.push(chaincoinService.BlockHash(blockId - i).pipe(
+                        switchMap(blockHash => {
+                            return combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(
+                                map(([block, dbBlock]) =>{ 
+                                    if (dbBlock == null) return block;
+                                    var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
+                                    return Object.assign({}, block, dbBlock, {
+                                        extended:true,
+                                        value: parseFloat(dbBlock.value.toString()),
+                                        tx:transaction
+                                    });
+                                }),
+                                first()
+                            )
+                        })
+                    ));
+                }
+                
+                return combineLatest(observables);
+            })
+        ),
 
         BlockHash:chaincoinService.BlockHash,
 
