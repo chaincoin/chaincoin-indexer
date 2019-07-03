@@ -151,6 +151,22 @@ module.exports = function(url) {
         return this.connect().then(() => _masternodeEventsCollection.find({"output": output}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 ).toArray().then((items) => items[0]));
     };
 
+    this.getMasternodeEvents = function(output,pos,pageSize){
+        return this.connect().then(() => {
+            if (pos != null) pos = parseInt(pos);
+            if (pageSize != null) pageSize = parseInt(pageSize);
+        
+            if (pageSize == null) pageSize = 10;
+            if (pageSize > 200) pageSize = 200;
+        
+            var cusor = this._masternodeEventsCollection.find({"output": output}).sort( { time: 1 } ).skip(pos - pageSize).limit( pageSize );
+        
+            return cusor.toArray().then(function(items){
+                return items.reverse();
+            });
+        });
+    };
+
     this.saveAddressTxs = (addressTxs) => {
         return this.connect().then(() => new Promise((resolve, reject) =>
         {
@@ -270,7 +286,7 @@ module.exports = function(url) {
     
             if (vinBalance != null)
             {
-                send = new Big("0").minus(new Big(vinBalance.value.toString()));
+                sent = new Big("0").minus(new Big(vinBalance.value.toString()));
                 address.txCount = address.txCount + vinBalance.count;
                 if (address.lastActivity < vinBalance.lastActivity) address.lastActivity = vinBalance.lastActivity;
             }
@@ -303,7 +319,7 @@ module.exports = function(url) {
             
             bulk.execute(function(err,result) {
     
-                if (err == null && result.isOk()) resolve();
+                if (err == null && result.isOk()) resolve(result);
                 else reject(err);
              
             });
@@ -369,7 +385,7 @@ module.exports = function(url) {
 
     this.getAddressTx = (address, pos) => {
         return  this.connect().then(() => {
-            var cusor = _addressTxsCollection.find({"address": address}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 );
+            var cusor = this._addressTxsCollection.find({"address": address}).sort( { time: 1 } ).skip(parseInt(pos)).limit( 1 );
 
             return cusor.toArray().then(function(items){
                 return items[0];
@@ -377,13 +393,38 @@ module.exports = function(url) {
         });
     }
 
+    this.getAddressTxs = (address,pos,pageSize) => {
+        return  this.connect().then(() => {
+            var cusor = this._addressTxsCollection.find({"address": address}).sort( { time: 1 } ).skip(pos - pageSize).limit( pageSize );
+        
+            return cusor.toArray().then(function(items){
+                return items.reverse();
+            });
+        });
+    };
+    
+    
+
     this.getAddressUnspent = (address) => {
         return  this.connect().then(() => {
-            var cusor = _addressTxsCollection.find({"address": address, type:"vout",spent: false}).sort( { time: 1 } );
+            var cusor = this._addressTxsCollection.find({"address": address, type:"vout",spent: false}).sort( { time: 1 } );
 
             return cusor.toArray().then(function(items){
                 return items.reverse();
             });
         });
     }
+
+
+    this.getRichListCount = () =>{
+        return  this.connect().then(() =>this._addressesCollection.countDocuments());
+    };
+
+    this.getRichList = (pos,pageSize) => {
+        return this.connect().then(() =>{
+            var cusor = this._addressesCollection.find().sort( { balance: -1, time:1 } ).skip(pos).limit( pageSize );
+            return cusor.toArray();
+        });
+        
+    };
 }
