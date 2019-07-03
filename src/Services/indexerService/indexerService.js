@@ -34,6 +34,7 @@ class IndexerService{
         this.AddressTx = require('./Observables/AddressTxObservables')(this);
         this.AddressTxs = require('./Observables/AddressTxsObservables')(this);
         this.AddressUnspent = require('./Observables/AddressUnspentObservables')(this);
+        this.PayOutStats = require('./observables/PayOutStatsObservables')(this);
 
         this.RichListCount = require('./Observables/RichListCountObservable')(this);
         this.RichList = require('./Observables/RichListObservables')(this);
@@ -208,7 +209,7 @@ class IndexerService{
 
         var blockData = {
             dbBlock : {
-                _id: block.hash,
+                _id: block.height,
                 hash: block.hash,
                 difficulty: block.difficulty,
                 hashRate: hashRate,
@@ -301,7 +302,8 @@ class IndexerService{
             vin: transaction.vin.indexOf(vin),
             value: new Big("-" + vout.value), 
             time:transaction.time,
-            blockHeight: block.height
+            blockHeight: block.height,
+            blockHash: block.hash
         };
 
 
@@ -342,6 +344,7 @@ class IndexerService{
             value: new Big(vout.value),
             time:transaction.time,
             blockHeight: block.height,
+            blockHash: block.hash,
             spent: false
         };
 
