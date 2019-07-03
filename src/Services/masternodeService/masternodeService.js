@@ -20,6 +20,7 @@ class MasternodeService{
         
         this.Masternode = require('./observables/MasternodeObservables')(this);
         this.MasternodeEvent = require('./observables/MasternodeEventObservables')(this);
+        this.MasternodeEvents = require('./observables/MasternodeEventsObservables')(this);
     }
     
 
