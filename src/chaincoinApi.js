@@ -184,7 +184,11 @@ class ChaincoinApi{
             var req = http.request(options, (resp) => {
                 var data = '';
     
-                if (resp.statusCode != 200) console.log("statusCode: ", resp.statusCode);
+                if (resp.statusCode != 200) {
+                    var t = method;
+                    var a = params;
+                    console.log("statusCode: ", resp.statusCode);
+                }
     
                 // A chunk of data has been recieved.
                 resp.on('data', (chunk) => {
