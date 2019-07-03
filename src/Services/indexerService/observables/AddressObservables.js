@@ -6,9 +6,9 @@ module.exports = function (indexerService) {
 
   var observableCache = {}; //TODO: memory leak
 
-  return (address) => {
+  return (addressId) => {
 
-    var observable = observableCache[address];
+    var observable = observableCache[addressId];
     if (observable == null)
     {
       
@@ -16,9 +16,9 @@ module.exports = function (indexerService) {
 
 
         var getAddress = async () =>{
-          var address = await indexerService.indexApi.getAddress(address);
+          var address = await indexerService.indexApi.getAddress(addressId);
           observer.next(address ||  {
-            address:  address,
+            address:  addressId,
             received: 0,
             sent: 0,
             balance: 0,
@@ -28,7 +28,7 @@ module.exports = function (indexerService) {
         }
     
         var subscription = indexerService.AddressUpdated.subscribe(dbAddress => {
-          if (address == dbAddress.address) observer.next(dbAddress);
+          if (addressId == dbAddress.address) observer.next(dbAddress);
         });
 
         getAddress();
@@ -42,7 +42,7 @@ module.exports = function (indexerService) {
         refCount: true
       }));
 
-      observableCache[address] = observable;
+      observableCache[addressId] = observable;
     }
 
     return observable;
