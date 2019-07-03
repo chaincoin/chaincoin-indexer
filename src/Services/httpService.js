@@ -85,7 +85,9 @@ class HttpService{
         }
 
         this.cleanWsConnection = async(webSocket) =>{
-            Object.keys(webSocket.subscriptions).forEach(subscriptionName => webSocket.subscriptions[subscriptionName].unsubscribe());
+            Object.keys(webSocket.subscriptions).forEach(subscriptionName => {
+                if (webSocket.subscriptions[subscriptionName] != null) webSocket.subscriptions[subscriptionName].unsubscribe()
+            });
         }
     }
    
@@ -119,6 +121,8 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         .pipe(map(([mnEntry, mnIndex]) =>{ 
             return Object.assign({}, mnEntry, mnIndex);
         })),
+        MasternodeEvent: masternodeService.MasternodeEvent,
+        MasternodeEvents: masternodeService.MasternodeEvents,
         MasternodeWinners: () => chaincoinService.MasternodeWinners,
 
 
@@ -183,8 +187,28 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         })),
 
 
-        Address: indexerService.Address,
+        Address: (address) => indexerService.Address(address).pipe(map(row => Object.assign({},row,{
+            balance: parseFloat(row.balance),
+            received: parseFloat(row.received),
+            sent: parseFloat(row.sent)
+        }))),
         AddressTx: indexerService.AddressTx,
+        AddressTxs: (address, pos, pageSize) => indexerService.AddressTxs(address, pos, pageSize).pipe(map(page =>{ 
+            return page.map(row => Object.assign({},row,{
+                value: parseFloat(row.value)
+            }))
+        })),
+        AddressUnspent: indexerService.AddressUnspent,
+
+        RichListCount: () => indexerService.RichListCount,
+        RichList: (pos,pageSize) => indexerService.RichList(pos,pageSize).pipe(map(page =>{ 
+
+            return page.map(row => Object.assign({},row,{
+                balance: parseFloat(row.balance),
+                received: parseFloat(row.received),
+                sent: parseFloat(row.sent)
+            }))
+        })),
 
         MasternodeListEntryAdded: () => chaincoinService.MasternodeListEntryAdded,
         MasternodeListEntryRemoved: () => chaincoinService.MasternodeListEntryRemoved,
