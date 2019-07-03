@@ -427,4 +427,107 @@ module.exports = function(url) {
         });
         
     };
+
+
+    this.getPayoutsStats = (address, type, unit) => {
+	
+	
+        var id = null;
+        var sort = null;
+        
+        if (unit == "daily")
+        {
+            id = {
+                'year': { '$year': "$date" },
+                'month': { '$month': "$date" },
+                'day': { '$dayOfMonth': "$date" }
+            };
+            
+            sort = {
+                '_id.year': 1,
+                '_id.month': 1,
+                '_id.day': 1,
+            };
+        }
+        else if (unit == "weekly")
+        {
+            id = {
+                'year': { '$year': "$date" },
+                'week': { '$week': "$date" }
+            }
+            
+            sort = {
+                '_id.year': 1,
+                '_id.week': 1
+            };
+        }
+        else if (unit == "monthly")
+        {
+            id = {
+                'year': { '$year': "$date" },
+                'month': { '$month': "$date" }
+            }
+            
+            sort = {
+                '_id.year': 1,
+                '_id.month': 1
+            };
+        }
+        else if (unit == "yearly")
+        {
+            id = {
+                'year': { '$year': "$date" }
+            }
+            
+            sort = {
+                '_id.year': 1
+            };
+        }
+        
+        
+        return new Promise((resolve,reject) =>{
+            this._addressTxsCollection.aggregate(
+            [ 
+                { $match: 
+                    {
+                        "address": address,
+                        "payout": type
+                    }
+                }, 
+                {
+                    $project: {
+                        time: {
+                            $multiply : ["$time",  1000 ]
+                        },
+                        value: true
+                    }
+                },
+                {
+                    $project: {
+                        date: {
+                            $toDate : "$time"
+                        },
+                        value: true
+                    }
+                },
+                { 
+                  $group: {
+                    _id: id, 
+                    value: {
+                      $sum: "$value"
+                    },
+                    count:{
+                        $sum: 1
+                    }
+                  }
+                },
+                {
+                    $sort: sort
+                },
+            ], function(err, items){
+                var result = items.toArray();
+                resolve(result);
+              });
+        });
+    }
 }
