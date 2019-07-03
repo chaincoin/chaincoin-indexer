@@ -17,7 +17,7 @@ class IndexerService{
         this.currentBlockHash = null;
 
         this.bestBlockHashSubscription = null;
-        this.asyncBlockSync = 100;
+        this.asyncBlockSync = 1000;
 
         this.onError = new Subject();
 
@@ -25,12 +25,18 @@ class IndexerService{
         this.BlockAdded = new Subject();
         this.TransactionAdded = new Subject();
         this.AddressUpdated = new Subject();
+        this.AddressesInserted = new Subject(); 
         
 
         this.Block = require('./Observables/BlockObservables')(this);
         this.Transaction = require('./Observables/TransactionObservables')(this);
         this.Address = require('./Observables/AddressObservables')(this);
         this.AddressTx = require('./Observables/AddressTxObservables')(this);
+        this.AddressTxs = require('./Observables/AddressTxsObservables')(this);
+        this.AddressUnspent = require('./Observables/AddressUnspentObservables')(this);
+
+        this.RichListCount = require('./Observables/RichListCountObservable')(this);
+        this.RichList = require('./Observables/RichListObservables')(this);
     }
     
 
@@ -74,10 +80,14 @@ class IndexerService{
                 //currentBlock.previousblockhash
             }
 
+            //var newBlocks = (await this.chaincoinService.Blocks(currentBlock.height + this.asyncBlockSync,this.asyncBlockSync).pipe(first()).toPromise()).reverse();
+            //TODO: check there hasnt been a reorg in data
+
+
             var newBlock = null;
             var newBlocks = [];
             if (currentBlock.nextblockhash != null)
-            {
+            { 
                 for(var i = 0; i < this.asyncBlockSync; i++)
                 {
                     newBlock = await this.chaincoinService.Block((newBlock || currentBlock).nextblockhash).pipe(first()).toPromise();
@@ -93,15 +103,15 @@ class IndexerService{
 
                     if (this.bestBlockHashSubscription == null) return;
                 }
+
+                var blockDataPromises = newBlocks.map(newBlock => this.ProcessBlock(newBlock));
+                var blockDatas = await Promise.all(blockDataPromises);
+
+                await this.SaveBlockDatas(blockDatas);
+
+                if (newBlocks.length > 0) this.currentBlockHash = newBlocks[newBlocks.length - 1].hash;
             }
             
-
-            var blockDataPromises = newBlocks.map(newBlock => this.ProcessBlock(newBlock));
-            var blockDatas = await Promise.all(blockDataPromises);
-
-            await this.SaveBlockDatas(blockDatas);
-
-            if (newBlocks.length > 0) this.currentBlockHash = newBlocks[newBlocks.length - 1].hash;
 
             if (this.bestBlockHashSubscription == null) return;
 
@@ -136,7 +146,7 @@ class IndexerService{
 
         var dbAddressTxs = flatMap(blockDatas,blockData => flatMap(blockData.transactionDatas,transactionData => transactionData.dbAddressTxs));
         dbAddressTxs.forEach(dbAddressTx => dbAddressTx.value = mongodbDecimal.fromString(dbAddressTx.value.toString()));
-        await this.indexApi.saveAddressTxs(dbAddressTxs);
+        if (dbAddressTxs.length > 0) await this.indexApi.saveAddressTxs(dbAddressTxs);
 
         
 
@@ -145,23 +155,31 @@ class IndexerService{
         
 
 
-        var addressIds = {};
+        var addressIdsObject = {};
         blockDatas.forEach(blockData => blockData.transactionDatas.forEach(transactionData => {
-            addressIds = Object.assign(addressIds,transactionData.addresses);
+            addressIdsObject = Object.assign(addressIdsObject,transactionData.addresses);
         }));
 
-        var addressSummaries = await this.indexApi.getCalculateAddresses(Object.keys(addressIds));
-        addressSummaries.forEach(addressSummary => addressSummary._id = addressSummary.address)
-        await this.indexApi.saveAddresses(addressSummaries);
+        var addressIds = Object.keys(addressIdsObject);
+        if (addressIds.length > 0){
+            var addressSummaries = await this.indexApi.getCalculateAddresses(addressIds);
+            addressSummaries.forEach(addressSummary => addressSummary._id = addressSummary.address);
+    
+            var saveAddressesResult = await this.indexApi.saveAddresses(addressSummaries);
+            if (saveAddressesResult.nInserted != 0) this.AddressesInserted.next(saveAddressesResult.nInserted);
 
-        //Trigger Observables
-        addressSummaries.forEach(addressSummary => this.AddressUpdated.next(addressSummary));
+            //Trigger Observables
+            addressSummaries.forEach(addressSummary => this.AddressUpdated.next(addressSummary));
+        }
+        
+        
+        
 
 
 
         var dbTransactions = flatMap(blockDatas,blockData => blockData.transactionDatas.map(transactionData => transactionData.dbTransaction));
         dbTransactions.forEach(dbTransaction => dbTransaction.vin.forEach(vin => vin.value = mongodbDecimal.fromString(vin.value.toString())));
-        await this.indexApi.saveTransactions(dbTransactions);
+        if (dbTransactions.length > 0) await this.indexApi.saveTransactions(dbTransactions);
 
         //Trigger Observables
         dbTransactions.forEach(dbTransaction => this.TransactionAdded.next(dbTransaction));
@@ -174,7 +192,7 @@ class IndexerService{
             dbBlock.value = mongodbDecimal.fromString(dbBlock.value.toString());
             dbBlock.tx.forEach(tx => tx.value = mongodbDecimal.fromString(tx.value.toString()));
         });
-        await this.indexApi.saveBlocks(dbBlocks);
+        if (dbBlocks.length > 0) await this.indexApi.saveBlocks(dbBlocks);
 
         //Trigger Observables
         dbBlocks.forEach(dbBlock => this.BlockAdded.next(dbBlock));
