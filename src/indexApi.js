@@ -87,6 +87,23 @@ module.exports = function(url) {
                 createMasternodeEventsPromise.then((masternodeEventsCollection) => {
                     this._masternodeEventsCollection = masternodeEventsCollection;
                 });
+
+
+                var createBlockSubscriptionsPromise = _dbo.createCollection("blockSubscriptions").then(function(blockSubscriptions){
+                    _blockSubscriptions = blockSubscriptions;
+                    return Promise.all([_blockSubscriptions.createIndex({firebaseId:1})]);
+                });
+
+                var createAddressSubscriptionsPromise = _dbo.createCollection("addressSubscriptions").then(function(addressSubscriptions){
+                    _addressSubscriptions = addressSubscriptions;
+                    return Promise.all([_addressSubscriptions.createIndex({address:1}),_addressSubscriptions.createIndex({firebaseId:1})]);
+                });
+            
+            
+                var createMasternodeSubscriptionsPromise = _dbo.createCollection("masternodeSubscriptions").then(function(masternodeSubscriptions){
+                    _masternodeSubscriptions = masternodeSubscriptions;
+                    return Promise.all([_masternodeSubscriptions.createIndex({masternodeOutPoint:1}),_masternodeSubscriptions.createIndex({firebaseId:1})]);
+                });
             
                 Promise.all([
                     createBlocksPromise,
@@ -95,7 +112,10 @@ module.exports = function(url) {
                     createAddressTxsPromise, 
                     createOpReturnsPromise, 
                     createMasternodesPromise, 
-                    createMasternodeEventsPromise
+                    createMasternodeEventsPromise,
+                    createBlockSubscriptionsPromise,
+                    createAddressSubscriptionsPromise,
+                    createMasternodeSubscriptionsPromise
                 ]).then(function(){
                     resolve();
                 }).catch(reject);
@@ -431,103 +451,327 @@ module.exports = function(url) {
 
     this.getPayoutsStats = (address, type, unit) => {
 	
-	
-        var id = null;
-        var sort = null;
-        
-        if (unit == "daily")
-        {
-            id = {
-                'year': { '$year': "$date" },
-                'month': { '$month': "$date" },
-                'day': { '$dayOfMonth': "$date" }
-            };
+        return this.connect().then(() =>{
+            var id = null;
+            var sort = null;
             
-            sort = {
-                '_id.year': 1,
-                '_id.month': 1,
-                '_id.day': 1,
-            };
-        }
-        else if (unit == "weekly")
-        {
-            id = {
-                'year': { '$year': "$date" },
-                'week': { '$week': "$date" }
+            if (unit == "daily")
+            {
+                id = {
+                    'year': { '$year': "$date" },
+                    'month': { '$month': "$date" },
+                    'day': { '$dayOfMonth': "$date" }
+                };
+                
+                sort = {
+                    '_id.year': 1,
+                    '_id.month': 1,
+                    '_id.day': 1,
+                };
+            }
+            else if (unit == "weekly")
+            {
+                id = {
+                    'year': { '$year': "$date" },
+                    'week': { '$week': "$date" }
+                }
+                
+                sort = {
+                    '_id.year': 1,
+                    '_id.week': 1
+                };
+            }
+            else if (unit == "monthly")
+            {
+                id = {
+                    'year': { '$year': "$date" },
+                    'month': { '$month': "$date" }
+                }
+                
+                sort = {
+                    '_id.year': 1,
+                    '_id.month': 1
+                };
+            }
+            else if (unit == "yearly")
+            {
+                id = {
+                    'year': { '$year': "$date" }
+                }
+                
+                sort = {
+                    '_id.year': 1
+                };
             }
             
-            sort = {
-                '_id.year': 1,
-                '_id.week': 1
-            };
-        }
-        else if (unit == "monthly")
-        {
-            id = {
-                'year': { '$year': "$date" },
-                'month': { '$month': "$date" }
-            }
             
-            sort = {
-                '_id.year': 1,
-                '_id.month': 1
-            };
-        }
-        else if (unit == "yearly")
-        {
-            id = {
-                'year': { '$year': "$date" }
-            }
-            
-            sort = {
-                '_id.year': 1
-            };
-        }
-        
-        
-        return new Promise((resolve,reject) =>{
-            this._addressTxsCollection.aggregate(
-            [ 
-                { $match: 
+            return new Promise((resolve,reject) =>{
+                this._addressTxsCollection.aggregate(
+                [ 
+                    { $match: 
+                        {
+                            "address": address,
+                            "payout": type
+                        }
+                    }, 
                     {
-                        "address": address,
-                        "payout": type
-                    }
-                }, 
-                {
-                    $project: {
-                        time: {
-                            $multiply : ["$time",  1000 ]
-                        },
-                        value: true
-                    }
-                },
-                {
-                    $project: {
-                        date: {
-                            $toDate : "$time"
-                        },
-                        value: true
-                    }
-                },
-                { 
-                  $group: {
-                    _id: id, 
-                    value: {
-                      $sum: "$value"
+                        $project: {
+                            time: {
+                                $multiply : ["$time",  1000 ]
+                            },
+                            value: true
+                        }
                     },
-                    count:{
-                        $sum: 1
+                    {
+                        $project: {
+                            date: {
+                                $toDate : "$time"
+                            },
+                            value: true
+                        }
+                    },
+                    { 
+                    $group: {
+                        _id: id, 
+                        value: {
+                        $sum: "$value"
+                        },
+                        count:{
+                            $sum: 1
+                        }
                     }
-                  }
-                },
-                {
-                    $sort: sort
-                },
-            ], function(err, items){
-                var result = items.toArray();
-                resolve(result);
-              });
+                    },
+                    {
+                        $sort: sort
+                    },
+                ], function(err, items){
+                    var result = items.toArray();
+                    resolve(result);
+                });
+            });
         });
+    }
+
+
+    this.deleteSubscriptions = async (firebaseId) =>
+    {
+        
+        await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.deleteOne({_id: firebaseId},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        await new Promise((resolve, reject) =>
+        {
+            this._masternodeSubscriptions.deleteMany({firebaseId: firebaseId},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        await new Promise((resolve, reject) =>
+        {
+            this._addressSubscriptions.deleteMany({firebaseId: firebaseId},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+    };
+
+
+
+    this.updateSubscriptions = async (oldFirebaseId, newFirebaseId) =>
+    {
+        
+        await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.deleteOne({_id: oldFirebaseId},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.update({_id: newFirebaseId}, {_id: newFirebaseId}, { upsert: true, safe: true },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        
+        await new Promise((resolve, reject) => 
+        {
+            this._masternodeSubscriptions.updateMany({firebaseId: oldFirebaseId}, { $set : {firebaseId : newFirebaseId } },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        await new Promise((resolve, reject) =>
+        {
+            this._addressSubscriptions.updateMany({firebaseId: oldFirebaseId}, { $set : {firebaseId : newFirebaseId } },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+        
+
+    };
+
+
+    this.saveBlockSubscription = async (firebaseId) =>
+    {
+        var entity = {
+            firebaseId: firebaseId
+        };
+
+        await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.update({_id: firebaseId}, entity, { upsert: true, safe: true },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+    };
+
+
+    this.deleteBlockSubscription = async (firebaseId) =>
+    {
+        await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.deleteOne({_id: firebaseId},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+
+    };
+
+
+    this.isBlockSubscription = async (firebaseId) =>
+    { 
+        return await new Promise((resolve, reject) =>
+        {
+            this._blockSubscriptions.findOne({_id: firebaseId},function(err,result){
+                if (err == null) resolve(result != null);
+                else reject(err);
+            });
+        });
+
+    };
+
+    this.saveMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    {
+        var entity = {
+            firebaseId: firebaseId,
+            masternodeOutpoint: masternodeOutpoint
+        };
+
+        await new Promise((resolve, reject) =>
+        {
+            this._masternodeSubscriptions.update({_id: firebaseId + "-" + masternodeOutpoint}, entity, { upsert: true, safe: true },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+    };
+
+
+    this.deleteMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    {
+        await new Promise((resolve, reject) =>
+        {
+            this._masternodeSubscriptions.deleteOne({_id: firebaseId + "-" + masternodeOutpoint},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+
+    };
+
+    this.isMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    { 
+        var result = await new Promise((resolve, reject) =>
+        {
+            this._masternodeSubscriptions.findOne({_id: firebaseId + "-" + masternodeOutpoint},function(err,result){
+                if (err == null) resolve(result != null);
+                else reject(err);
+            });
+        });
+
+        return result;
+    };
+
+
+    this.saveAddressSubscription = async (firebaseId, address) =>
+    {
+        var entity = {
+            firebaseId: firebaseId,
+            address: address
+        };
+
+        await new Promise((resolve, reject) =>
+        {
+            this._addressSubscriptions.update({_id: firebaseId + "-" + address}, entity, { upsert: true, safe: true },function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+    };
+
+
+    this.deleteAddressSubscription = async (firebaseId, address) =>
+    {
+        await new Promise((resolve, reject) =>
+        {
+            this._addressSubscriptions.deleteOne({_id: firebaseId + "-" + address},function(err){
+                if (err == null) resolve();
+                else reject(err);
+            });
+        });
+
+    };
+
+    this.isAddressSubscription = async (firebaseId, address) =>
+    { 
+        var result = await new Promise((resolve, reject) =>
+        {
+            this._addressSubscriptions.findOne({_id: firebaseId + "-" + address},function(err,result){
+                if (err == null) resolve(result != null);
+                else reject(err);
+            });
+        });
+        return result;
+    };
+
+
+    this.getBlockSubscriptions = async () =>{
+        var cusor = this._blockSubscriptions.find();
+
+        var result = await cusor.toArray().then(function(items){
+            return items;
+        });
+
+        return result;
+    }
+
+    this.getMasternodeSubscriptions = async (masternodeOutpoint) => {
+        var cusor = this._masternodeSubscriptions.find({masternodeOutpoint:masternodeOutpoint});
+
+        var result = await cusor.toArray().then((items) => {
+            return items;
+        });
+
+        return result;
+    }
+
+    this.getAddressSubscriptions = async (address) =>{
+
+        var cusor = this._addressSubscriptions.find({address:address});
+
+        var result = await cusor.toArray().then(function(items){
+            return items;
+        });
+
+        return result;
     }
 }
