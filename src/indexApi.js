@@ -89,20 +89,20 @@ module.exports = function(url) {
                 });
 
 
-                var createBlockSubscriptionsPromise = _dbo.createCollection("blockSubscriptions").then(function(blockSubscriptions){
-                    _blockSubscriptions = blockSubscriptions;
-                    return Promise.all([_blockSubscriptions.createIndex({firebaseId:1})]);
+                var createBlockSubscriptionsPromise = _dbo.createCollection("blockSubscriptions").then((blockSubscriptions) =>{
+                    this._blockSubscriptions = blockSubscriptions;
+                    return Promise.all([this._blockSubscriptions.createIndex({firebaseId:1})]);
                 });
 
-                var createAddressSubscriptionsPromise = _dbo.createCollection("addressSubscriptions").then(function(addressSubscriptions){
-                    _addressSubscriptions = addressSubscriptions;
-                    return Promise.all([_addressSubscriptions.createIndex({address:1}),_addressSubscriptions.createIndex({firebaseId:1})]);
+                var createAddressSubscriptionsPromise = _dbo.createCollection("addressSubscriptions").then((addressSubscriptions) =>{
+                    this._addressSubscriptions = addressSubscriptions;
+                    return Promise.all([this._addressSubscriptions.createIndex({address:1}),this._addressSubscriptions.createIndex({firebaseId:1})]);
                 });
             
             
-                var createMasternodeSubscriptionsPromise = _dbo.createCollection("masternodeSubscriptions").then(function(masternodeSubscriptions){
-                    _masternodeSubscriptions = masternodeSubscriptions;
-                    return Promise.all([_masternodeSubscriptions.createIndex({masternodeOutPoint:1}),_masternodeSubscriptions.createIndex({firebaseId:1})]);
+                var createMasternodeSubscriptionsPromise = _dbo.createCollection("masternodeSubscriptions").then((masternodeSubscriptions) =>{
+                    this._masternodeSubscriptions = masternodeSubscriptions;
+                    return Promise.all([this._masternodeSubscriptions.createIndex({masternodeOutPoint:1}),this._masternodeSubscriptions.createIndex({firebaseId:1})]);
                 });
             
                 Promise.all([
@@ -116,7 +116,7 @@ module.exports = function(url) {
                     createBlockSubscriptionsPromise,
                     createAddressSubscriptionsPromise,
                     createMasternodeSubscriptionsPromise
-                ]).then(function(){
+                ]).then(() => {
                     resolve();
                 }).catch(reject);
             
@@ -659,14 +659,14 @@ module.exports = function(url) {
 
     };
 
-    this.saveMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    this.saveMasternodeSubscription = (firebaseId, masternodeOutpoint) =>
     {
         var entity = {
             firebaseId: firebaseId,
             masternodeOutpoint: masternodeOutpoint
         };
 
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._masternodeSubscriptions.update({_id: firebaseId + "-" + masternodeOutpoint}, entity, { upsert: true, safe: true },function(err){
                 if (err == null) resolve();
@@ -688,17 +688,18 @@ module.exports = function(url) {
 
     };
 
-    this.isMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    this.isMasternodeSubscription = (firebaseId, masternodeOutpoint) =>
     { 
-        var result = await new Promise((resolve, reject) =>
-        {
-            this._masternodeSubscriptions.findOne({_id: firebaseId + "-" + masternodeOutpoint},function(err,result){
-                if (err == null) resolve(result != null);
-                else reject(err);
+        return this.connect().then(() =>{
+            return new Promise((resolve, reject) =>
+            {
+                this._masternodeSubscriptions.findOne({_id: firebaseId + "-" + masternodeOutpoint},function(err,result){
+                    if (err == null) resolve(result != null);
+                    else reject(err);
+                });
             });
         });
 
-        return result;
     };
 
 
