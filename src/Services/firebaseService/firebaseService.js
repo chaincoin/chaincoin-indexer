@@ -9,15 +9,25 @@ class FirebaseService{
 
     
 
-    constructor(chaincoinService, indexerService) {
+    constructor(chaincoinService, indexerService, indexApi) {
 
         this.chaincoinService = chaincoinService;
         this.indexerService = indexerService;
+        this.indexApi = indexApi;
 
 
+        
         this.onError = new Subject();
 
         this.bestBlockHashSubscription = null;
+
+
+        this.BlockNotificationChanged = new Subject();
+        this.SetMasternodeNotificationEvent = new Subject();
+
+        this.BlockNotification = require('./observables/BlockNotificationObservables')(this);
+        this.MasternodeNotification = require('./observables/MasternodeNotificationObservables')(this);
+        this.SetMasternodeNotification = require('./observables/SetMasternodeNotificationObservables')(this);
 
     }
     
@@ -44,10 +54,10 @@ class FirebaseService{
 
         try
         {
-            var subscriptions = await androidServices._getBlockSubscriptions();
+            var subscriptions = await indexApi._getBlockSubscriptions();
 
             subscriptions.forEach(subscription => {
-                androidServices._sendFirebaseMessage(subscription.firebaseId,{
+                indexApi._sendFirebaseMessage(subscription.firebaseId,{
                     eventType: topic,
                     blockHash: blockHash
                 });
