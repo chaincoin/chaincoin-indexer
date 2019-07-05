@@ -2,19 +2,19 @@ var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
 var { combineLatest } = require('rxjs');
-var { first, map, switchMap, combineAll } = require('rxjs/operators');
+var { first, map, switchMap } = require('rxjs/operators');
 
 
 class HttpService{
 
 
-    constructor(port, chaincoinService, masternodeService, indexerService) {
+    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService);
-
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService);
+        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService);
         this.webSockets = [];
 
 
@@ -95,7 +95,7 @@ class HttpService{
 }
 
 
-var servicesToObservables = (chaincoinService, masternodeService, indexerService) =>{
+var servicesToObservables = (chaincoinService, masternodeService, indexerService, firebaseService) =>{
     return {
 
         NewBlockHash: () => chaincoinService.NewBlockHash,
@@ -216,10 +216,21 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         MasternodeListEntryAdded: () => chaincoinService.MasternodeListEntryAdded,
         MasternodeListEntryRemoved: () => chaincoinService.MasternodeListEntryRemoved,
         MasternodeListEntryStatusChanged: () => chaincoinService.MasternodeListEntryStatusChanged,
-        MasternodeListEntryExpiring: () => chaincoinService.MasternodeListEntryExpiring
+        MasternodeListEntryExpiring: () => chaincoinService.MasternodeListEntryExpiring,
+
+
+        BlockNotification:() => firebaseService.BlockNotification,
+        MasternodeNotification: firebaseService.MasternodeNotification
     }
 }
 
+
+var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService) =>{
+    return {
+        setMasternodeNotification: firebaseService.SetMasternodeNotification
+        
+    }
+}
 
 module.exports = HttpService;
 
@@ -398,6 +409,43 @@ class WebSocketConnection{
                 }));
             }
 
+        }
+
+
+        var methodFunc = this.httpService.serverMethods[request.op];
+        if (methodFunc == null){
+            this.ws.send(JSON.stringify({
+                id: messageId,
+                op: request.op + "Response",
+                success:false
+            }));
+
+            return;
+        } 
+
+        var methodFuncParamNames = getParamNames(methodFunc);
+
+        var methodFuncParams = methodFuncParamNames.map(function(item){
+            return request[item];
+        });
+
+        try{
+
+            var data = await methodFunc.apply(null,methodFuncParams).pipe(first()).toPromise();
+            this.ws.send(JSON.stringify({
+                id: messageId,
+                op: request.op + "Response",
+                data: data,
+                success:true
+            }));
+        }
+        catch(ex)
+        {
+            this.ws.send(JSON.stringify({
+                id: messageId,
+                op: request.op + "Response",
+                success:false
+            }));
         }
 
     }
