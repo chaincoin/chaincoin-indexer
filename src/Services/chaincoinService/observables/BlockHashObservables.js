@@ -1,42 +1,31 @@
 const { Observable, Subject } = require('rxjs');
-const { shareReplay } = require('rxjs/operators');
+const { shareReplay, map, switchMap } = require('rxjs/operators');
 
 
 module.exports = function (chaincoinService) {
 
-  var blockHashObservableCache = []; //TODO: memory leak
+  var blockHashCache = chaincoinService.BestBlockHash.pipe( //TODO: this could be better 
+    map(bestBlockHash => {
+      return {};
+    }),
+    shareReplay({
+      bufferSize: 1,
+      refCount: false
+    })
+  );
 
   return (blockId) => {
 
-    var blockHashObservable = blockHashObservableCache[blockId];
-    if (blockHashObservable == null)
-    {
-      blockHashObservable = Observable.create(function (observer) {
+    return blockHashCache.pipe(
+      switchMap(blockHashCache =>{
+        if (blockHashCache[blockId] == null){
+          var promise = chaincoinService.chaincoinApi.getBlockHash(blockId);
+          blockHashCache[blockId] = promise;
 
-        var blockHash = null;
-    
-        var getBlock = async () => {
-          var newBlockHash = await chaincoinService.chaincoinApi.getBlockHash(blockId);
-    
-          if (blockHash == newBlockHash) return;
-          blockHash = newBlockHash;
-          observer.next(newBlockHash);
-        };
-    
-        getBlock();
-
-        //TODO: detect reorg and then make sure hash for blockId hasnt changed
-    
-        return () => {
+          promise.catch(() => blockHashCache[blockId] = null);
         }
-      }).pipe(shareReplay({
-        bufferSize: 1,
-        refCount: true
-      }));
-      
-      blockHashObservable[blockId] = blockHashObservable;
-    }
-
-    return blockHashObservable;
+        return blockHashCache[blockId];
+      })
+    )
   };
 };
