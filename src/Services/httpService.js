@@ -169,7 +169,7 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
             .pipe(map(([block, dbBlock]) =>{ 
                 if (dbBlock == null) return block;
 
-                var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(dbBlock.value.toString())}));
+                var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
 
                 return Object.assign({}, block, dbBlock, {
                     extended:true,
@@ -212,7 +212,10 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 
             if (dbTransaction == null) return transaction;
 
-            var vin = dbTransaction.vin.map(vin => Object.assign({}, vin,{value: parseFloat(vin.value.toString())}));
+            var vin = dbTransaction.vin.map(vin => {
+                if (vin.coinbase != null) return vin;
+                return Object.assign({}, vin,{value: parseFloat(vin.value.toString())})
+            });
 
             return Object.assign({}, transaction, dbTransaction, {
                 extended:true,
