@@ -20,15 +20,15 @@ module.exports = function (firebaseService) {
           observer.next(masternodeNotification);
         }
     
-        /*var subscription = indexerService.AddressUpdated.subscribe(dbAddress => { //TODO: make event driven
-          if (addressId == dbAddress.address) observer.next(dbAddress);
-        });*/
+        var subscription = firebaseService.SetMasternodeNotificationEvent.subscribe(SetMasternodeNotification => { 
+          if (SetMasternodeNotification.firebaseId == firebaseId && SetMasternodeNotification.output == output) observer.next(SetMasternodeNotification.enabled);
+        });
 
         getMasternodeNotification();
 
 
         return () => {
-          //subscription.unsubscribe();
+          subscription.unsubscribe();
         }
       }).pipe(shareReplay({
         bufferSize: 1,
