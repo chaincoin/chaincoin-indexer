@@ -49,6 +49,8 @@ class ChaincoinService{
 
         this.Transaction = require('./observables/TransactionObservables')(this);
 
+        this.SendRawTransaction = require('./observables/SendRawTransactionObservables')(this);
+
         this.MasternodeListEntryAdded = require('./observables/MasternodeListEntryAddedObservable')(this);
         this.MasternodeListEntryRemoved = require('./observables/MasternodeListEntryRemovedObservable')(this);
         this.MasternodeListEntryStatusChanged = require('./observables/MasternodeListEntryStatusChangedObservable')(this);
