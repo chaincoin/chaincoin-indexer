@@ -22,10 +22,16 @@ class FirebaseService{
         this.bestBlockHashSubscription = null;
 
 
-        this.BlockNotificationChanged = new Subject();
+        this.SetBlockNotificationEvent = new Subject();
         this.SetMasternodeNotificationEvent = new Subject();
+        this.SetAddressNotificationEvent = new Subject();
 
         this.BlockNotification = require('./observables/BlockNotificationObservables')(this);
+        this.SetBlockNotification = require('./observables/SetBlockNotificationObservables')(this);
+
+        this.AddressNotification = require('./observables/AddressNotificationObservables')(this);
+        this.SetAddressNotification = require('./observables/SetAddressNotificationObservables')(this);
+
         this.MasternodeNotification = require('./observables/MasternodeNotificationObservables')(this);
         this.SetMasternodeNotification = require('./observables/SetMasternodeNotificationObservables')(this);
 
