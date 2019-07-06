@@ -20,8 +20,8 @@ module.exports = function (indexerService) {
           observer.next(addressTx);
         }
     
-        var subscription = indexerService.AddressTx(address).subscribe(dbAddress => {
-          if (addressTx == null && dbAddress.txCount > pos) getAddressTx();
+        var subscription = indexerService.Address(address).subscribe(dbAddress => {
+          if (addressTx == null && dbAddress.txCount > pos) getAddressTx(); //TODO: this refreshes data more often than needed
         });
 
 
