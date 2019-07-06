@@ -272,6 +272,7 @@ var servicesToMethods = (chaincoinService, masternodeService, indexerService, fi
         setBlockNotification: firebaseService.SetBlockNotification,
         setAddressNotification: firebaseService.SetAddressNotification,
         setMasternodeNotification: firebaseService.SetMasternodeNotification,
+        sendRawTransaction: chaincoinService.SendRawTransaction
         //getMiningHeader: () => from(miningService.getMiningHeader()),
         //submitBlock: (jobId, time, nonce, extraNonce) => from(miningService.submitBlock(jobId, time, nonce, extraNonce)),
     }
