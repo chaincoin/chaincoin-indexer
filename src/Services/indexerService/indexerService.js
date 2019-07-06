@@ -23,9 +23,11 @@ class IndexerService{
 
         
         this.BlockAdded = new Subject();
+        this.BlocksAdded = new Subject();
         this.TransactionAdded = new Subject();
         this.AddressUpdated = new Subject();
         this.AddressesInserted = new Subject(); 
+        this.ProcessingLoopComplete = new Subject(); 
         
 
         this.Block = require('./Observables/BlockObservables')(this);
@@ -117,11 +119,7 @@ class IndexerService{
             if (this.bestBlockHashSubscription == null) return;
 
 
-            if (this.endBlockHash != null && this.currentBlockHash == this.endBlockHash)
-            {
-                this.stop();
-                return;
-            }
+            
 
         }
         catch(ex)
@@ -136,7 +134,7 @@ class IndexerService{
             this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(filter(newBestBlockHash => newBestBlockHash != this.currentBlockHash),first()).subscribe((bestBlockHash) => this.run(bestBlockHash));
         }
 
-       
+        this.ProcessingLoopComplete.next({});
     }
 
 
