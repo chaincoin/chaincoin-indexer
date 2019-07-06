@@ -21,6 +21,8 @@ module.exports = function (chaincoinService) {
         if (cache[transactionId] == null){
           var promise = chaincoinService.chaincoinApi.getTransaction(transactionId);
           cache[transactionId] = promise;
+
+          promise.catch(() => cache[transactionId] = null);
         }
         return cache[transactionId];
       })
