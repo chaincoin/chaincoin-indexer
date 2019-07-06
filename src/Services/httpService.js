@@ -178,14 +178,14 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
                 });
             }));
         },
-        BlocksExtended:(blockId, pageSize) =>chaincoinService.BestBlockHash.pipe(
+        BlocksExtended:(blockId, pageSize) =>chaincoinService.BestBlockHash.pipe( //TODO: this could be better
             switchMap(bestBlockHash =>{
                 var observables = [];
                 for(var i = 0; i < pageSize; i++)
                 {
                     observables.push(chaincoinService.BlockHash(blockId - i).pipe(
                         switchMap(blockHash => {
-                            return combineLatest(chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(
+                            return combineLatest(chaincoinService.Block(blockHash).pipe(first()),indexerService.Block(blockHash)).pipe(
                                 map(([block, dbBlock]) =>{ 
                                     if (dbBlock == null) return block;
                                     var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
@@ -194,8 +194,7 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
                                         value: parseFloat(dbBlock.value.toString()),
                                         tx:transaction
                                     });
-                                }),
-                                first()
+                                })
                             )
                         })
                     ));
