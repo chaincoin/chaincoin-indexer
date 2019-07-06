@@ -581,17 +581,17 @@ module.exports = function(url) {
 
 
 
-    this.updateSubscriptions = async (oldFirebaseId, newFirebaseId) =>
+    this.updateSubscriptions = (oldFirebaseId, newFirebaseId) =>
     {
         
-        await new Promise((resolve, reject) =>
+        var blockSubscriptionssPromise = new Promise((resolve, reject) =>
         {
             this._blockSubscriptions.deleteOne({_id: oldFirebaseId},function(err){
                 if (err == null) resolve();
                 else reject(err);
             });
         });
-        await new Promise((resolve, reject) =>
+        var blockSubscriptionsPromise = new Promise((resolve, reject) =>
         {
             this._blockSubscriptions.update({_id: newFirebaseId}, {_id: newFirebaseId}, { upsert: true, safe: true },function(err){
                 if (err == null) resolve();
@@ -599,14 +599,14 @@ module.exports = function(url) {
             });
         });
         
-        await new Promise((resolve, reject) => 
+        var masternodeSubscriptionsPromise = new Promise((resolve, reject) => 
         {
             this._masternodeSubscriptions.updateMany({firebaseId: oldFirebaseId}, { $set : {firebaseId : newFirebaseId } },function(err){
                 if (err == null) resolve();
                 else reject(err);
             });
         });
-        await new Promise((resolve, reject) =>
+        var addressSubscriptionsPromise = new Promise((resolve, reject) =>
         {
             this._addressSubscriptions.updateMany({firebaseId: oldFirebaseId}, { $set : {firebaseId : newFirebaseId } },function(err){
                 if (err == null) resolve();
@@ -614,17 +614,22 @@ module.exports = function(url) {
             });
         });
         
-
+        return Promise.all(
+            blockSubscriptionssPromise,
+            blockSubscriptionsPromise,
+            masternodeSubscriptionsPromise,
+            addressSubscriptionsPromise
+        )
     };
 
 
-    this.saveBlockSubscription = async (firebaseId) =>
+    this.saveBlockSubscription = (firebaseId) =>
     {
         var entity = {
             firebaseId: firebaseId
         };
 
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._blockSubscriptions.update({_id: firebaseId}, entity, { upsert: true, safe: true },function(err){
                 if (err == null) resolve();
@@ -634,9 +639,9 @@ module.exports = function(url) {
     };
 
 
-    this.deleteBlockSubscription = async (firebaseId) =>
+    this.deleteBlockSubscription = (firebaseId) =>
     {
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._blockSubscriptions.deleteOne({_id: firebaseId},function(err){
                 if (err == null) resolve();
@@ -647,9 +652,9 @@ module.exports = function(url) {
     };
 
 
-    this.isBlockSubscription = async (firebaseId) =>
+    this.isBlockSubscription = (firebaseId) =>
     { 
-        return await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._blockSubscriptions.findOne({_id: firebaseId},function(err,result){
                 if (err == null) resolve(result != null);
@@ -676,9 +681,9 @@ module.exports = function(url) {
     };
 
 
-    this.deleteMasternodeSubscription = async (firebaseId, masternodeOutpoint) =>
+    this.deleteMasternodeSubscription =  (firebaseId, masternodeOutpoint) =>
     {
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._masternodeSubscriptions.deleteOne({_id: firebaseId + "-" + masternodeOutpoint},function(err){
                 if (err == null) resolve();
@@ -703,14 +708,14 @@ module.exports = function(url) {
     };
 
 
-    this.saveAddressSubscription = async (firebaseId, address) =>
+    this.saveAddressSubscription = (firebaseId, address) =>
     {
         var entity = {
             firebaseId: firebaseId,
             address: address
         };
 
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._addressSubscriptions.update({_id: firebaseId + "-" + address}, entity, { upsert: true, safe: true },function(err){
                 if (err == null) resolve();
@@ -720,9 +725,9 @@ module.exports = function(url) {
     };
 
 
-    this.deleteAddressSubscription = async (firebaseId, address) =>
+    this.deleteAddressSubscription = (firebaseId, address) =>
     {
-        await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._addressSubscriptions.deleteOne({_id: firebaseId + "-" + address},function(err){
                 if (err == null) resolve();
@@ -732,47 +737,36 @@ module.exports = function(url) {
 
     };
 
-    this.isAddressSubscription = async (firebaseId, address) =>
+    this.isAddressSubscription = (firebaseId, address) =>
     { 
-        var result = await new Promise((resolve, reject) =>
+        return new Promise((resolve, reject) =>
         {
             this._addressSubscriptions.findOne({_id: firebaseId + "-" + address},function(err,result){
                 if (err == null) resolve(result != null);
                 else reject(err);
             });
         });
-        return result;
     };
 
 
-    this.getBlockSubscriptions = async () =>{
+    this.getBlockSubscriptions = () =>{
         var cusor = this._blockSubscriptions.find();
-
-        var result = await cusor.toArray().then(function(items){
+        return cusor.toArray().then(function(items){
             return items;
         });
-
-        return result;
     }
 
-    this.getMasternodeSubscriptions = async (masternodeOutpoint) => {
+    this.getMasternodeSubscriptions = (masternodeOutpoint) => {
         var cusor = this._masternodeSubscriptions.find({masternodeOutpoint:masternodeOutpoint});
-
-        var result = await cusor.toArray().then((items) => {
+        return cusor.toArray().then((items) => {
             return items;
         });
-
-        return result;
     }
 
-    this.getAddressSubscriptions = async (address) =>{
-
+    this.getAddressSubscriptions = (address) =>{
         var cusor = this._addressSubscriptions.find({address:address});
-
-        var result = await cusor.toArray().then(function(items){
+        return cusor.toArray().then(function(items){
             return items;
         });
-
-        return result;
     }
 }
