@@ -18,7 +18,9 @@ var masternodeService = new MasternodeService(chaincoinService, indexApi);
 masternodeService.start();
 
 var indexerService = new IndexerService(chaincoinService, indexApi);
-indexerService.start();
+
+setTimeout(() =>indexerService.start(), 60000)
+
 
 var firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi);
 firebaseService.start();
