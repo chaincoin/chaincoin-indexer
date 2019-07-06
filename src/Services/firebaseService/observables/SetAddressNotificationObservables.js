@@ -5,8 +5,8 @@ const { map } = require('rxjs/operators');
 module.exports = function (firebaseService) {
   return (firebaseId, address, enabled) => {
     return from(enabled?
-      firebaseService.indexApi.saveMasternodeSubscription(firebaseId, output):
-      firebaseService.indexApi.deleteAddressSubscription(firebaseId, output)
+      firebaseService.indexApi.saveAddressSubscription(firebaseId, address):
+      firebaseService.indexApi.deleteAddressSubscription(firebaseId, address)
     ).pipe(map(result => {
       firebaseService.SetAddressNotificationEvent.next({firebaseId, address, enabled})
       return result;
