@@ -177,7 +177,9 @@ class IndexerService{
 
 
         var dbTransactions = flatMap(blockDatas,blockData => blockData.transactionDatas.map(transactionData => transactionData.dbTransaction));
-        dbTransactions.forEach(dbTransaction => dbTransaction.vin.forEach(vin => vin.value = mongodbDecimal.fromString(vin.value.toString())));
+        dbTransactions.forEach(dbTransaction => dbTransaction.vin.forEach(vin => {
+            if (vin.value != null) vin.value = mongodbDecimal.fromString(vin.value.toString())
+        }));
         if (dbTransactions.length > 0) await this.indexApi.saveTransactions(dbTransactions);
 
         //Trigger Observables
@@ -280,6 +282,7 @@ class IndexerService{
     async ProcessVin(block, transaction, transactionData, vin)
     {
         if (vin.coinbase != null ){
+            transactionData.dbTransaction.vin.push(vin);
             return;
         }
 
@@ -350,7 +353,8 @@ class IndexerService{
             var outValue = new Big(0);
             transaction.vout.forEach(vout => outValue = outValue.add(new Big(vout.value))); 
 
-            if (new Big(vout.value).div(outValue).toString() == "0.2"){ //TODO: This only works since the dev fund
+
+            if (new Big(vout.value).lt(outValue.div(new Big(2)))){ 
                 tx.payout = "masternode";
             }
             else
