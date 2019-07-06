@@ -7,8 +7,10 @@ module.exports = function (firebaseService) {
     return from(enabled?
       firebaseService.indexApi.saveMasternodeSubscription(firebaseId, output):
       firebaseService.indexApi.deleteMasternodeSubscription(firebaseId, output)
-    )/*.pipe(map(
+    ).pipe(map(result => {
       firebaseService.SetMasternodeNotificationEvent.next({firebaseId, output, enabled})
-    ))*/;
+      return result;
+    }));
+      
   };
 };
