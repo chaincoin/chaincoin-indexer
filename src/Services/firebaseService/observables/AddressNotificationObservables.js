@@ -2,13 +2,13 @@ const { Observable, Subject } = require('rxjs');
 const { shareReplay } = require('rxjs/operators');
 
 
-module.exports = function (indexerService) {
+module.exports = function (firebaseService) {
 
   var observableCache = {}; //TODO: memory leak
 
   return (firebaseId, address) => {
 
-    var observable = observableCache[addressId];
+    var observable = observableCache[address];
     if (observable == null)
     {
       
@@ -16,7 +16,7 @@ module.exports = function (indexerService) {
 
 
         var getAddressNotification = async () =>{
-          var addressNotification = await indexerService.indexApi.isAddressSubscription(firebaseId, address);
+          var addressNotification = await firebaseService.indexApi.isAddressSubscription(firebaseId, address);
           observer.next(addressNotification);
         }
     
@@ -35,7 +35,7 @@ module.exports = function (indexerService) {
         refCount: true
       }));
 
-      observableCache[addressId] = observable;
+      observableCache[address] = observable;
     }
 
     return observable;
