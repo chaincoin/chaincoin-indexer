@@ -20,15 +20,15 @@ module.exports = function (firebaseService) {
           observer.next(blockSubscription);
         }
     
-        /*var subscription = indexerService.AddressUpdated.subscribe(dbAddress => { //TODO: make event driven
-          if (addressId == dbAddress.address) observer.next(dbAddress);
-        });*/
+        var subscription = indexerService.SetBlockNotificationEvent.subscribe(SetBlockNotificationEvent => { //TODO: make event driven
+          if (firebaseId == SetBlockNotificationEvent.firebaseId) observer.next(SetBlockNotificationEvent.enabled);
+        });
 
         isBlockSubscription();
 
 
         return () => {
-          //subscription.unsubscribe();
+          subscription.unsubscribe();
         }
       }).pipe(shareReplay({
         bufferSize: 1,
