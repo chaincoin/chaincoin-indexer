@@ -4,7 +4,7 @@ const  { shareReplay } = require('rxjs/operators');
   
 module.exports = function(chaincoinService){
 
-    return Observable.create(function(observer) { //TODO: add caching
+    return Observable.create(function(observer) {
 
         var bestBlockHash = null;
 
