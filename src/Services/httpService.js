@@ -47,25 +47,60 @@ class HttpService{
 
             var url_parts = url.parse(req.url, true);
 
-            var observableFuncName = url_parts.pathname.substring(4); 
-            var observableFunc = this.serverObservables[observableFuncName];
-            if (observableFunc == null){
+            if (url_parts.pathname.startsWith("get"))
+            {
+                var observableFuncName = url_parts.pathname.substring(4); 
+                var observableFunc = this.serverObservables[observableFuncName];
+                if (observableFunc == null){
+                    res.writeHead(404, { 'Content-Type': 'text/plain' });
+                    res.end('\n');
+
+                    return;
+                } 
+
+                var observableFuncParamNames = getParamNames(observableFunc);
+
+                var observableFuncParams = observableFuncParamNames.map(function(item){
+                    return url_parts.query[item];
+                });
+
+
+                try
+                {
+                    var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(data, null, 4) + '\n');
+                }
+                catch(ex)
+                {
+                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                    res.end('failed\n');
+                }
+
+                return;
+            }
+            
+
+            var funcName = url_parts.pathname.substring(4); 
+            var func = this.serverMethods[funcName];
+            if (func == null){
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
                 res.end('\n');
 
                 return;
             } 
 
-            var observableFuncParamNames = getParamNames(observableFunc);
+            var funcParamNames = getParamNames(func);
 
-            var observableFuncParams = observableFuncParamNames.map(function(item){
+            var funcParams = funcParamNames.map(function(item){
                 return url_parts.query[item];
             });
 
 
             try
             {
-                var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
+                var data = await func.apply(null,funcParams).pipe(first()).toPromise();
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(data, null, 4) + '\n');
@@ -219,7 +254,8 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         MasternodeListEntryExpiring: () => chaincoinService.MasternodeListEntryExpiring,
 
 
-        BlockNotification:() => firebaseService.BlockNotification,
+        BlockNotification: firebaseService.BlockNotification,
+        AddressNotification: firebaseService.AddressNotification,
         MasternodeNotification: firebaseService.MasternodeNotification
     }
 }
@@ -227,7 +263,9 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 
 var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService) =>{
     return {
-        setMasternodeNotification: firebaseService.SetMasternodeNotification
+        setBlockNotification: firebaseService.SetBlockNotification,
+        setAddressNotification: firebaseService.SetAddressNotification,
+        setMasternodeNotification: firebaseService.SetMasternodeNotification,
         
     }
 }
@@ -409,6 +447,7 @@ class WebSocketConnection{
                 }));
             }
 
+            return;
         }
 
 
