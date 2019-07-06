@@ -15,7 +15,6 @@ class FirebaseService{
         this.indexerService = indexerService;
         this.indexApi = indexApi;
 
-
         
         this.onError = new Subject();
 
@@ -43,13 +42,31 @@ class FirebaseService{
     {
         if (this.bestBlockHashSubscription != null) throw "Service already started";
         this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.subscribe((bestBlockHash => this.processBestBlockHash(bestBlockHash)));
+        this.addressUpdatedSubscription = this.indexerService.AddressUpdated.subscribe((dbAddress => this.processAddress(dbAddress)));
+        this.masternodeListEntryAddedSubscription = this.chaincoinService.MasternodeListEntryAdded.subscribe((mnEntry => this.processMasternodeAdded(mnEntry)));
+        this.masternodeListEntryStatusChangedSubscription = this.chaincoinService.MasternodeListEntryStatusChanged.subscribe((mnEntry => this.processMasternodeChanged(mnEntry)));
+        this.masternodeListEntryRemovedSubscription = this.chaincoinService.MasternodeListEntryRemoved.subscribe((mnEntry => this.processMasternodeRemoved(mnEntry)));
+        this.masternodeListEntryExpiringSubscription = this.chaincoinService.MasternodeListEntryExpiring.subscribe((mnEntry => this.processMasternodeExpiring(mnEntry)));
+        
     }
 
     stop()
     {
         if (this.bestBlockHashSubscription == null) throw "Service not started";
         this.bestBlockHashSubscription.unsubscribe();
+        this.addressUpdatedSubscription.unsubscribe();
+        this.masternodeListEntryAddedSubscription.unsubscribe();
+        this.masternodeListEntryStatusChangedSubscription.unsubscribe();
+        this.masternodeListEntryRemovedSubscription.unsubscribe();
+        this.masternodeListEntryExpiringSubscription.unsubscribe();
+
+
         this.bestBlockHashSubscription = null;
+        this.addressUpdatedSubscription = null;
+        this.masternodeListEntryAddedSubscription = null;
+        this.masternodeListEntryStatusChangedSubscription = null;
+        this.masternodeListEntryRemovedSubscription = null;
+        this.masternodeListEntryExpiringSubscription = null;
     }
 
     isRunning(){
@@ -60,12 +77,111 @@ class FirebaseService{
 
         try
         {
-            var subscriptions = await indexApi._getBlockSubscriptions();
+            var subscriptions = await this.indexerService.indexApi.getBlockSubscriptions(); //TODO: shouldnt be accessing index api directly
 
             subscriptions.forEach(subscription => {
-                indexApi._sendFirebaseMessage(subscription.firebaseId,{
-                    eventType: topic,
-                    blockHash: blockHash
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "newBlock",
+                    blockHash: bestBlockHash
+                });
+            });
+        }
+        catch(ex)
+        {
+            this.onError.next(ex);
+        }
+    }
+
+    async processAddress(dbAddress){
+
+        try
+        {
+            var subscriptions = await this.indexerService.indexApi.getAddressSubscriptions(dbAddress.address); //TODO: shouldnt be accessing index api directly
+
+            subscriptions.forEach(subscription => {
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "newAddressTransaction",
+                    address: dbAddress.address
+                });
+            });
+        }
+        catch(ex)
+        {
+            this.onError.next(ex);
+        }
+    }
+
+
+    async processMasternodeAdded(mnEntry){
+
+        try
+        {
+            var subscriptions = await this.indexerService.indexApi.getMasternodeSubscriptions(mnEntry.output); //TODO: shouldnt be accessing index api directly
+
+            subscriptions.forEach(subscription => {
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "newMasternode",
+                    masternodeOutPoint: mnEntry.output
+                });
+            });
+        }
+        catch(ex)
+        {
+            this.onError.next(ex);
+        }
+    }
+
+    async processMasternodeChanged(mnEntry){
+
+        try
+        {
+            var subscriptions = await this.indexerService.indexApi.getMasternodeSubscriptions(mnEntry.output); //TODO: shouldnt be accessing index api directly
+
+            subscriptions.forEach(subscription => {
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "changedMasternode",
+                    masternodeOutPoint: mnEntry.output,
+                    status: mnEntry.newState.status,
+                    previousStatus:mnEntry.oldState.status,
+                    
+                });
+            });
+        }
+        catch(ex)
+        {
+            this.onError.next(ex);
+        }
+    }
+
+    async processMasternodeRemoved(mnEntry){
+
+        try
+        {
+            var subscriptions = await this.indexerService.indexApi.getMasternodeSubscriptions(mnEntry.output); //TODO: shouldnt be accessing index api directly
+
+            subscriptions.forEach(subscription => {
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "removedMasternode",
+                    masternodeOutPoint: mnEntry.output                    
+                });
+            });
+        }
+        catch(ex)
+        {
+            this.onError.next(ex);
+        }
+    }
+
+    async processMasternodeExpiring(mnEntry){
+
+        try
+        {
+            var subscriptions = await this.indexerService.indexApi.getMasternodeSubscriptions(mnEntry.output); //TODO: shouldnt be accessing index api directly
+
+            subscriptions.forEach(subscription => {
+                this.sendFirebaseMessage(subscription.firebaseId,{
+                    eventType: "expiringMasternode",
+                    masternodeOutPoint: mnEntry.output                    
                 });
             });
         }
