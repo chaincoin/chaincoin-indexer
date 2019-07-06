@@ -235,7 +235,11 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         AddressUnspent: (address) => indexerService.AddressUnspent(address).pipe(map(rows => rows.map(row => Object.assign({},row,{
             value: parseFloat(row.value)
         })))),
-        PayOutStats: indexerService.PayOutStats,
+        PayOutStats: (address, type, unit) => {
+            return indexerService.PayOutStats(address, type, unit).pipe(map(payOutStats => payOutStats.map(payOutStat => Object.assign({},payOutStat,{
+                value: parseFloat(payOutStat.value)
+            }))))
+        },
 
         RichListCount: () => indexerService.RichListCount,
         RichList: (pos,pageSize) => indexerService.RichList(pos,pageSize).pipe(map(page =>{ 
