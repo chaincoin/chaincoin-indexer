@@ -1,9 +1,7 @@
-const { Observable, Subject, BehaviorSubject  } = require('rxjs');
-const { shareReplay } = require('rxjs/operators');
+const { Subject, BehaviorSubject  } = require('rxjs');
 
 
 const zmq = require('zeromq');
-
 
 
 class ChaincoinService{
@@ -16,7 +14,6 @@ class ChaincoinService{
 
         this.chaincoinZmqSockConnect = new BehaviorSubject();
         this.chaincoinZmqSockMessage = new Subject();
-
 
         this.NewBlockHash = require('./observables/NewBlockHashObservable')(this);
         this.NewTransactionHash = require('./observables/NewTransactionHashObservable')(this);
@@ -98,6 +95,6 @@ class ChaincoinService{
     }
 
 
+
 }
 module.exports = ChaincoinService;
-

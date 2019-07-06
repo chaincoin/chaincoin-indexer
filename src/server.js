@@ -2,6 +2,7 @@ var  ChaincoinService = require('./Services/chaincoinService/chaincoinService');
 var  IndexerService = require('./Services/indexerService/indexerService');
 var  MasternodeService = require('./Services/masternodeService/masternodeService');
 var  FirebaseService = require('./Services/firebaseService/firebaseService');
+//var  MiningService = require('./Services/miningService/miningService');
 var  HttpService = require('./Services/httpService');
 var  ChaincoinApi = require('./chaincoinApi');
 var  IndexApi = require('./indexApi');
@@ -24,7 +25,10 @@ indexerService.start()
 var firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi);
 firebaseService.start();
 
-var httpService = new HttpService(8080,chaincoinService,masternodeService,indexerService, firebaseService);
+//var miningService = new MiningService(chaincoinApi);
+//miningService.start();
+
+var httpService = new HttpService(8080,chaincoinService,masternodeService,indexerService, firebaseService, /*miningService*/);
 httpService.start();
 
 

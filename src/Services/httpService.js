@@ -1,20 +1,20 @@
 var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
-var { combineLatest } = require('rxjs');
+var { combineLatest, from } = require('rxjs');
 var { first, map, switchMap } = require('rxjs/operators');
 
 
 class HttpService{
 
 
-    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService) {
+    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService, miningService) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService);
-        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService);
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService, miningService);
+        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService, miningService);
         this.webSockets = [];
 
 
@@ -130,7 +130,7 @@ class HttpService{
 }
 
 
-var servicesToObservables = (chaincoinService, masternodeService, indexerService, firebaseService) =>{
+var servicesToObservables = (chaincoinService, masternodeService, indexerService, firebaseService, miningService) =>{
     return {
 
         NewBlockHash: () => chaincoinService.NewBlockHash,
@@ -267,12 +267,13 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 }
 
 
-var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService) =>{
+var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService, miningService) =>{
     return {
         setBlockNotification: firebaseService.SetBlockNotification,
         setAddressNotification: firebaseService.SetAddressNotification,
         setMasternodeNotification: firebaseService.SetMasternodeNotification,
-        
+        //getMiningHeader: () => from(miningService.getMiningHeader()),
+        //submitBlock: (jobId, time, nonce, extraNonce) => from(miningService.submitBlock(jobId, time, nonce, extraNonce)),
     }
 }
 
@@ -418,42 +419,35 @@ class WebSocketConnection{
         {
             var observableFuncName = request.op.substring(3);
             var observableFunc = this.httpService.serverObservables[observableFuncName];
-            if (observableFunc == null){
-                this.ws.send(JSON.stringify({
-                    id: messageId,
-                    op: request.op + "Response",
-                    success:false
-                }));
+            if (observableFunc != null){
+                var observableFuncParamNames = getParamNames(observableFunc);
 
+                var observableFuncParams = observableFuncParamNames.map(function(item){
+                    return request[item];
+                });
+    
+                try{
+    
+                    var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
+                    this.ws.send(JSON.stringify({
+                        id: messageId,
+                        op: request.op + "Response",
+                        data: data,
+                        success:true
+                    }));
+                }
+                catch(ex)
+                {
+                    this.ws.send(JSON.stringify({
+                        id: messageId,
+                        op: request.op + "Response",
+                        success:false
+                    }));
+                }
+    
                 return;
             } 
-
-            var observableFuncParamNames = getParamNames(observableFunc);
-
-            var observableFuncParams = observableFuncParamNames.map(function(item){
-                return request[item];
-            });
-
-            try{
-
-                var data = await observableFunc.apply(null,observableFuncParams).pipe(first()).toPromise();
-                this.ws.send(JSON.stringify({
-                    id: messageId,
-                    op: request.op + "Response",
-                    data: data,
-                    success:true
-                }));
-            }
-            catch(ex)
-            {
-                this.ws.send(JSON.stringify({
-                    id: messageId,
-                    op: request.op + "Response",
-                    success:false
-                }));
-            }
-
-            return;
+            
         }
 
 
