@@ -715,11 +715,13 @@ module.exports = function(url) {
             address: address
         };
 
-        return new Promise((resolve, reject) =>
-        {
-            this._addressSubscriptions.update({_id: firebaseId + "-" + address}, entity, { upsert: true, safe: true },function(err){
-                if (err == null) resolve();
-                else reject(err);
+        return this.connect().then(() =>{
+            return new Promise((resolve, reject) =>
+            {
+                this._addressSubscriptions.update({_id: firebaseId + "-" + address}, entity, { upsert: true, safe: true },function(err){
+                    if (err == null) resolve();
+                    else reject(err);
+                });
             });
         });
     };
@@ -727,46 +729,55 @@ module.exports = function(url) {
 
     this.deleteAddressSubscription = (firebaseId, address) =>
     {
-        return new Promise((resolve, reject) =>
-        {
-            this._addressSubscriptions.deleteOne({_id: firebaseId + "-" + address},function(err){
-                if (err == null) resolve();
-                else reject(err);
+        return this.connect().then(() =>{
+            return new Promise((resolve, reject) =>
+            {
+                this._addressSubscriptions.deleteOne({_id: firebaseId + "-" + address},function(err){
+                    if (err == null) resolve();
+                    else reject(err);
+                });
             });
         });
-
     };
 
     this.isAddressSubscription = (firebaseId, address) =>
     { 
-        return new Promise((resolve, reject) =>
-        {
-            this._addressSubscriptions.findOne({_id: firebaseId + "-" + address},function(err,result){
-                if (err == null) resolve(result != null);
-                else reject(err);
+        return this.connect().then(() =>{
+            return new Promise((resolve, reject) =>
+            {
+                this._addressSubscriptions.findOne({_id: firebaseId + "-" + address},function(err,result){
+                    if (err == null) resolve(result != null);
+                    else reject(err);
+                });
             });
         });
     };
 
 
     this.getBlockSubscriptions = () =>{
-        var cusor = this._blockSubscriptions.find();
-        return cusor.toArray().then(function(items){
-            return items;
+        return this.connect().then(() =>{
+            var cusor = this._blockSubscriptions.find();
+            return cusor.toArray().then(function(items){
+                return items;
+            });
         });
     }
 
     this.getMasternodeSubscriptions = (masternodeOutpoint) => {
-        var cusor = this._masternodeSubscriptions.find({masternodeOutpoint:masternodeOutpoint});
-        return cusor.toArray().then((items) => {
-            return items;
+        return this.connect().then(() =>{
+            var cusor = this._masternodeSubscriptions.find({masternodeOutpoint:masternodeOutpoint});
+            return cusor.toArray().then((items) => {
+                return items;
+            });
         });
     }
 
     this.getAddressSubscriptions = (address) =>{
-        var cusor = this._addressSubscriptions.find({address:address});
-        return cusor.toArray().then(function(items){
-            return items;
+        return this.connect().then(() =>{
+            var cusor = this._addressSubscriptions.find({address:address});
+            return cusor.toArray().then(function(items){
+                return items;
+            });
         });
     }
 }
