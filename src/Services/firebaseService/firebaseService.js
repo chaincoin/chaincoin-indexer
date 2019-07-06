@@ -1,4 +1,5 @@
 
+var https = require("https");
 var mongodbDecimal = require('mongodb').Decimal128;
 var Big = require('big.js');
 
