@@ -21,6 +21,8 @@ module.exports = function (chaincoinService) {
         if (blockCache[hash] == null){
           var promise = chaincoinService.chaincoinApi.getBlock(hash);
           blockCache[hash] = promise;
+
+          promise.catch(() => blockCache[hash] = null);
         }
         return blockCache[hash];
       })
