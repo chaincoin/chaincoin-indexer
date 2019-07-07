@@ -10,11 +10,12 @@ class FirebaseService{
 
     
 
-    constructor(chaincoinService, indexerService, indexApi) {
+    constructor(chaincoinService, indexerService, indexApi, firebaseKey) {
 
         this.chaincoinService = chaincoinService;
         this.indexerService = indexerService;
         this.indexApi = indexApi;
+        this.firebaseKey = firebaseKey;
 
         
         this.onError = new Subject();
@@ -194,14 +195,14 @@ class FirebaseService{
 
 
     sendFirebaseMessage(firebaseId, message){
-        return new Promise(function(resolve,reject){
+        return new Promise((resolve,reject) =>{
             var options = {
               host: "fcm.googleapis.com",
               port: 443,
               path: '/fcm/send',
               method: 'POST',
               headers: {
-                  'Authorization': 'key=AIzaSyAyjp-QtYRAxW_XJBxg0LvpO_V6FDicGLQ',
+                  'Authorization': 'key=' + this.firebaseKey,
                   'Content-Type': 'application/json',
               }
             };
