@@ -30,24 +30,24 @@ class IndexerService{
         this.ProcessingLoopComplete = new Subject(); 
         
 
-        this.Block = require('./Observables/BlockObservables')(this);
-        this.BlockExtended = require('./Observables/BlockExtendedObservables')(this);
-        this.BlocksExtended = require('./Observables/BlocksExtendedObservables')(this);
+        this.Block = require('./observables/BlockObservables')(this);
+        this.BlockExtended = require('./observables/BlockExtendedObservables')(this);
+        this.BlocksExtended = require('./observables/BlocksExtendedObservables')(this);
 
-        this.Transaction = require('./Observables/TransactionObservables')(this);
-        this.TransactionExtended = require('./Observables/TransactionExtendedObservables')(this);
+        this.Transaction = require('./observables/TransactionObservables')(this);
+        this.TransactionExtended = require('./observables/TransactionExtendedObservables')(this);
 
-        this.MemPoolExtended = require('./Observables/MemPoolExtendedObservable')(this);
-        this.AddressMemPool = require('./Observables/AddressMemPoolObservables')(this);
+        this.MemPoolExtended = require('./observables/MemPoolExtendedObservable')(this);
+        this.AddressMemPool = require('./observables/AddressMemPoolObservables')(this);
 
-        this.Address = require('./Observables/AddressObservables')(this);
-        this.AddressTx = require('./Observables/AddressTxObservables')(this);
-        this.AddressTxs = require('./Observables/AddressTxsObservables')(this);
-        this.AddressUnspent = require('./Observables/AddressUnspentObservables')(this);
+        this.Address = require('./observables/AddressObservables')(this);
+        this.AddressTx = require('./observables/AddressTxObservables')(this);
+        this.AddressTxs = require('./observables/AddressTxsObservables')(this);
+        this.AddressUnspent = require('./observables/AddressUnspentObservables')(this);
         this.PayOutStats = require('./observables/PayOutStatsObservables')(this);
 
-        this.RichListCount = require('./Observables/RichListCountObservable')(this);
-        this.RichList = require('./Observables/RichListObservables')(this);
+        this.RichListCount = require('./observables/RichListCountObservable')(this);
+        this.RichList = require('./observables/RichListObservables')(this);
     }
     
 
