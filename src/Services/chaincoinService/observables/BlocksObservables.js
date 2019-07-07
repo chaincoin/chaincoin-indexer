@@ -11,7 +11,7 @@ module.exports = function (chaincoinService) {
         {
           observables.push(chaincoinService.BlockHash(blockId - i).pipe(
               switchMap(hash => {
-                  return chaincoinService.Block(hash).pipe()
+                  return chaincoinService.Block(hash).pipe(first())
               })
           ));
 
