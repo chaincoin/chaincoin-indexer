@@ -1,7 +1,7 @@
 var http = require('http');
 var WebSocket = require('ws');
 var url = require('url');
-var { combineLatest, from } = require('rxjs');
+var { combineLatest, from, of } = require('rxjs');
 var { first, map, switchMap } = require('rxjs/operators');
 
 
@@ -47,7 +47,7 @@ class HttpService{
 
             var url_parts = url.parse(req.url, true);
 
-            if (url_parts.pathname.startsWith("get"))
+            if (url_parts.pathname.startsWith("/get"))
             {
                 var observableFuncName = url_parts.pathname.substring(4); 
                 var observableFunc = this.serverObservables[observableFuncName];
@@ -82,7 +82,7 @@ class HttpService{
             }
             
 
-            var funcName = url_parts.pathname.substring(4); 
+            var funcName = url_parts.pathname.substring(1); 
             var func = this.serverMethods[funcName];
             if (func == null){
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -145,7 +145,8 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         EstimateSmartFee: chaincoinService.EstimateSmartFee,
         MemPoolInfo: () => chaincoinService.MemPoolInfo,
         RawMemPool:() => chaincoinService.RawMemPool,
-
+        MemPool:() => chaincoinService.MemPool,
+        
         PeerInfo:() => chaincoinService.PeerInfo,
         ConnectoinCount:() => chaincoinService.ConnectoinCount,
 
@@ -163,66 +164,17 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 
         
 
-        Block:chaincoinService.Block,
-        BlockExtended:(hash) => {
-            return combineLatest(chaincoinService.Block(hash),indexerService.Block(hash))
-            .pipe(map(([block, dbBlock]) =>{ 
-                if (dbBlock == null) return block;
-
-                var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
-
-                return Object.assign({}, block, dbBlock, {
-                    extended:true,
-                    value: parseFloat(dbBlock.value.toString()),
-                    tx:transaction
-                });
-            }));
-        },
-        BlocksExtended:(blockId, pageSize) =>chaincoinService.BestBlockHash.pipe( //TODO: this could be better
-            switchMap(bestBlockHash =>{
-                var observables = [];
-                for(var i = 0; i < pageSize; i++)
-                {
-                    observables.push(chaincoinService.BlockHash(blockId - i).pipe(
-                        switchMap(blockHash => {
-                            return combineLatest(chaincoinService.Block(blockHash).pipe(first()),indexerService.Block(blockHash)).pipe(
-                                map(([block, dbBlock]) =>{ 
-                                    if (dbBlock == null) return block;
-                                    var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
-                                    return Object.assign({}, block, dbBlock, {
-                                        extended:true,
-                                        value: parseFloat(dbBlock.value.toString()),
-                                        tx:transaction
-                                    });
-                                })
-                            )
-                        })
-                    ));
-                }
-                
-                return combineLatest(observables);
-            })
-        ),
+        Block: chaincoinService.Block,
+        BlockExtended: indexerService.BlockExtended,
+        BlocksExtended:indexerService.BlocksExtended,
 
         BlockHash:chaincoinService.BlockHash,
 
         Transaction: chaincoinService.Transaction,
-        TransactionExtended:(transactionId) => combineLatest(chaincoinService.Transaction(transactionId),indexerService.Transaction(transactionId))
-        .pipe(map(([transaction, dbTransaction]) =>{ 
+        TransactionExtended: indexerService.TransactionExtended,
 
-            if (dbTransaction == null) return transaction;
-
-            var vin = dbTransaction.vin.map(vin => {
-                if (vin.coinbase != null) return vin;
-                return Object.assign({}, vin,{value: parseFloat(vin.value.toString())})
-            });
-
-            return Object.assign({}, transaction, dbTransaction, {
-                extended:true,
-                vin:vin
-            });
-        })),
-
+        MemPoolExtended:() => indexerService.MemPoolExtended,
+        AddressMemPool:() => indexerService.AddressMemPool,
 
         Address: (address) => indexerService.Address(address).pipe(map(row => Object.assign({},row,{
             balance: parseFloat(row.balance),
