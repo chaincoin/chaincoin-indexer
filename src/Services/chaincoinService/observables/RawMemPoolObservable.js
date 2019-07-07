@@ -19,15 +19,21 @@ module.exports = function(chaincoinService){
         }
 
 
-        var subscription = combineLatest(chaincoinService.NewBlockHash,chaincoinService.NewTransactionHash).subscribe(() =>{
+        var newBlockHashSubscription = chaincoinService.NewBlockHash.subscribe(() =>{
             getRawMemPool();
         });
+
+        var newTransactionHashSubscription = chaincoinService.NewTransactionHash.subscribe(() =>{
+            getRawMemPool();
+        });
+
 
         getRawMemPool();
         
 
         return () => {
-            subscription.unsubscribe();
+            newBlockHashSubscription.unsubscribe();
+            newTransactionHashSubscription.unsubscribe();
         }
     }).pipe(shareReplay({
         bufferSize: 1,
