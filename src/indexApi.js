@@ -358,7 +358,27 @@ module.exports = function(url) {
             
             bulk.execute(function(err,result) {
     
-                if (err == null && result.isOk()) resolve();
+                if (err == null && result.isOk()) resolve(result);
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    };
+
+    this.insertTransaction = (txid, transaction) =>{
+        return this.connect().then(() => new Promise((resolve, reject) => 
+        {
+            var bulk = this._transactionsCollection.initializeUnorderedBulkOp();
+    
+            bulk.find({_id:txid}).upsert().updateOne({
+                "$setOnInsert": transaction
+            });
+            
+            bulk.execute(function(err,result) {
+    
+                if (err == null && result.isOk()) resolve(result);
                 else reject(err);
              
             });
