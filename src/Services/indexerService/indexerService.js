@@ -31,7 +31,15 @@ class IndexerService{
         
 
         this.Block = require('./Observables/BlockObservables')(this);
+        this.BlockExtended = require('./Observables/BlockExtendedObservables')(this);
+        this.BlocksExtended = require('./Observables/BlocksExtendedObservables')(this);
+
         this.Transaction = require('./Observables/TransactionObservables')(this);
+        this.TransactionExtended = require('./Observables/TransactionExtendedObservables')(this);
+
+        this.MemPoolExtended = require('./Observables/MemPoolExtendedObservable')(this);
+        this.AddressMemPool = require('./Observables/AddressMemPoolObservables')(this);
+
         this.Address = require('./Observables/AddressObservables')(this);
         this.AddressTx = require('./Observables/AddressTxObservables')(this);
         this.AddressTxs = require('./Observables/AddressTxsObservables')(this);
@@ -48,6 +56,7 @@ class IndexerService{
     {
         if (this.bestBlockHashSubscription != null) throw "Service already started";
         this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
+        this.newTransactionHashSubscription = this.chaincoinService.NewTransactionHash.subscribe((txid => this.ProcessNewTransactionEvent(txid))); //TODO: is this waste full
     }
 
     stop()
@@ -55,6 +64,7 @@ class IndexerService{
         if (this.bestBlockHashSubscription == null) throw "Service not started";
         this.bestBlockHashSubscription.unsubscribe();
         this.bestBlockHashSubscription = null;
+        this.newTransactionHashSubscription = null;
     }
 
     isRunning(){
@@ -200,6 +210,32 @@ class IndexerService{
     }
 
 
+    async ProcessNewTransactionEvent(txid)
+    {
+        var transaction = await this.chaincoinService.Transaction(txid).pipe(first()).toPromise();
+        if (transaction.blockHash != null) return;
+
+        var dbTransaction = {
+            _id: txid,
+            vin: await Promise.all(transaction.vin.map(async vin =>{
+                if (vin.coinbase) return vin;
+                var vinTransaction = await this.chaincoinService.Transaction(vin.txid).pipe(first()).toPromise();
+                var vout = vinTransaction.vout[vin.vout]
+                var address = vout.scriptPubKey.addresses[0];
+                
+                return Object.assign({
+                    address: address,
+                    value: vout.value != null ? mongodbDecimal.fromString(vout.value.toString()) : null,
+                },vin);
+            }))
+        }
+      
+        var result = await this.indexApi.insertTransaction(txid,dbTransaction)
+
+        if (result.nUpserted > 0)this.TransactionAdded.next(dbTransaction);
+    }
+    
+    
     async ProcessBlock(block)
     {
 
@@ -275,6 +311,9 @@ class IndexerService{
             recipients: Object.keys(transactionData.recipients).length,
             value: transactionData.value
         });
+        
+
+        return transactionData;
 
     }
 
