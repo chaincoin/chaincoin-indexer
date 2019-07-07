@@ -9,7 +9,7 @@ var  IndexApi = require('./indexApi');
 
 
 
-var chaincoinApi = new ChaincoinApi("127.0.0.1",8332, "chaincoin","vjjbuuy754edvowqbnohc7yjb");
+var chaincoinApi = new ChaincoinApi(process.env.chaincoinRpcHost ||"127.0.0.1", process.env.chaincoinRpcPort||8332, process.env.chaincoinRpcUser||"chaincoin", process.env.chaincoinRpcPassword||"vjjbuuy754edvowqbnohc7yjb");
 var indexApi = new IndexApi(process.env.MONGODBURL || "mongodb://localhost:27017/");
 
 var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
@@ -22,13 +22,13 @@ var indexerService = new IndexerService(chaincoinService, indexApi);
 indexerService.start()
 
 
-var firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi);
+var firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi, process.env.firebaseKey);
 firebaseService.start();
 
 //var miningService = new MiningService(chaincoinApi);
 //miningService.start();
 
-var httpService = new HttpService(8080,chaincoinService,masternodeService,indexerService, firebaseService, /*miningService*/);
+var httpService = new HttpService(process.env.httpPort ||8080,chaincoinService,masternodeService,indexerService, firebaseService, /*miningService*/);
 httpService.start();
 
 
