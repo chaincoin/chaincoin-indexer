@@ -39,6 +39,7 @@ class ChaincoinService{
 
         this.MemPoolInfo = require('./observables/MemPoolInfoObservable')(this);
         this.RawMemPool = require('./observables/RawMemPoolObservable')(this);
+        this.MemPool = require('./observables/MemPoolObservable')(this);
 
         this.EstimateSmartFee = require('./observables/EstimateSmartFeeObservable')(this);
 
