@@ -5,8 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "debug": "node --inspect=0.0.0.0:39276 server.js",
-    "debug-brk": "node --inspect-brk=0.0.0.0:39276 server.js"
+    "debug": "node --inspect=0.0.0.0:39276 src/server.js",
+    "debug-brk": "node --inspect-brk=0.0.0.0:39276 src/server.js"
   },
   "author": "Chris McNamee",
   "license": "ISC",
