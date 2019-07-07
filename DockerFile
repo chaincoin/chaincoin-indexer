@@ -8,12 +8,7 @@ RUN apt-get install -y nodejs build-essential
 
 WORKDIR /root/chaincoin-index
 
-COPY chaincoin-index .
-RUN rm -rf node_modules
-
-RUN mkdir /root/Shared/
-COPY shared /root/Shared/
-
+COPY . .
 
 
 RUN npm install
