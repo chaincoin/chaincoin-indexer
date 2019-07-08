@@ -6,6 +6,8 @@ var Big = require('big.js');
 var  { Subject } = require('rxjs');
 var { first, filter  } = require('rxjs/operators');
 
+const uuidv4 = require('uuid/v4');
+
 class FirebaseService{
 
     
@@ -83,6 +85,8 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "newBlock",
                     blockHash: bestBlockHash
                 });
@@ -102,6 +106,8 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "newAddressTransaction",
                     address: dbAddress.address
                 });
@@ -122,6 +128,8 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "newMasternode",
                     masternodeOutPoint: mnEntry.output
                 });
@@ -141,6 +149,8 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "changedMasternode",
                     masternodeOutPoint: mnEntry.output,
                     status: mnEntry.newState.status,
@@ -163,6 +173,8 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "removedMasternode",
                     masternodeOutPoint: mnEntry.output                    
                 });
@@ -182,8 +194,10 @@ class FirebaseService{
 
             subscriptions.forEach(subscription => {
                 this.sendFirebaseMessage(subscription.firebaseId,{
+                    id: uuidv4().toString(),
+                    data: new Date(),
                     eventType: "expiringMasternode",
-                    masternodeOutPoint: mnEntry.output                    
+                    masternodeOutPoint: mnEntry.output               
                 });
             });
         }
@@ -195,6 +209,7 @@ class FirebaseService{
 
 
     sendFirebaseMessage(firebaseId, message){
+        
         return new Promise((resolve,reject) =>{
             var options = {
               host: "fcm.googleapis.com",
