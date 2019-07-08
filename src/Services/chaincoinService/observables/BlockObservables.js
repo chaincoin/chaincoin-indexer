@@ -1,43 +1,18 @@
-const { Observable, Subject, from, ReplaySubject } = require('rxjs');
+const { Observable, Subject, from } = require('rxjs');
 const { shareReplay, switchMap, map } = require('rxjs/operators');
 
 
-
-var BlockCache = (chaincoinService) =>{
-
-
-  var cache = {};
-
-
-  return {
-    getBlock:(hash) =>{
-     
-
-      if (cache[hash] == null)
-      {
-        cache = Observable.create(function (observer){
-
-
-          return () =>{
-            cache[hash] = null;
-          }
-        }).pipe(shareReplay({
-          bufferSize: 1,
-          refCount: true
-        }));
-        
-        
-      }
-
-      return cache[hash];
-    }
-  }
-}
-
 module.exports = function (chaincoinService) {
 
-  
-  
+  var blockCache = chaincoinService.BestBlockHash.pipe(
+    map(bestBlockHash => {
+      return {};
+    }),
+    shareReplay({
+      bufferSize: 1,
+      refCount: false
+    })
+  );
 
   return (hash) => {
 
