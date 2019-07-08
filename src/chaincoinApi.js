@@ -17,7 +17,7 @@ class ChaincoinApi{
         this.rpcPassword = rpcPassword;
 
 
-        this.rpcLimit = pLimit(10);
+        this.rpcLimit = pLimit(80);
     }
 
     getBestBlockHash() {
