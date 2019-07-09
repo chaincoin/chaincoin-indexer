@@ -9,7 +9,7 @@ var  IndexApi = require('./indexApi');
 
 
 
-var chaincoinApi = new ChaincoinApi(process.env.chaincoinRpcHost ||"127.0.0.1", process.env.chaincoinRpcPort||8332, process.env.chaincoinRpcUser||"chaincoin", process.env.chaincoinRpcPassword||"vjjbuuy754edvowqbnohc7yjb");
+var chaincoinApi = new ChaincoinApi(process.env.chaincoinRpcHost ||"127.0.0.1", process.env.chaincoinRpcPort||8332, process.env.chaincoinRpcUser||"chaincoin", process.env.chaincoinRpcPassword||"vjjbuuy754edvowqbnohc7yjb", process.env.chaincoinRpcThreads||10);
 var indexApi = new IndexApi(process.env.MONGODBURL || "mongodb://localhost:27017/");
 
 var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
