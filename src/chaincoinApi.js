@@ -10,14 +10,14 @@ const pLimit = require('p-limit');
 
 class ChaincoinApi{
 
-    constructor(rpcHost, rpcPort,rpcUser, rpcPassword) {
+    constructor(rpcHost, rpcPort,rpcUser, rpcPassword, rpcThreads) {
         this.rpcHost = rpcHost;
         this.rpcPort = rpcPort;
         this.rpcUser = rpcUser;
         this.rpcPassword = rpcPassword;
 
 
-        this.rpcLimit = pLimit(80);
+        this.rpcLimit = pLimit((typeof value === 'string' || value instanceof String) ? parseInt(rpcThreads) : rpcThreads);
     }
 
     getBestBlockHash() {
