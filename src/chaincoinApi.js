@@ -17,7 +17,7 @@ class ChaincoinApi{
         this.rpcPassword = rpcPassword;
 
 
-        this.rpcLimit = pLimit((typeof value === 'string' || value instanceof String) ? parseInt(rpcThreads) : rpcThreads);
+        this.rpcLimit = pLimit((typeof rpcThreads === 'string' || rpcThreads instanceof String) ? parseInt(rpcThreads) : rpcThreads);
     }
 
     getBestBlockHash() {
