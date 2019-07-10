@@ -634,12 +634,12 @@ module.exports = function(url) {
             });
         });
         
-        return Promise.all(
+        return Promise.all([
             blockSubscriptionssPromise,
             blockSubscriptionsPromise,
             masternodeSubscriptionsPromise,
             addressSubscriptionsPromise
-        )
+        ]).then(() => {});
     };
 
 
