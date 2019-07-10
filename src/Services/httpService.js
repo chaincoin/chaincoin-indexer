@@ -221,6 +221,8 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 
 var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService, miningService) =>{
     return {
+        updateNotifications: firebaseService.UpdateNotifications,
+        deleteNotifications: firebaseService.DeleteNotifications,
         setBlockNotification: firebaseService.SetBlockNotification,
         setAddressNotification: firebaseService.SetAddressNotification,
         setMasternodeNotification: firebaseService.SetMasternodeNotification,
