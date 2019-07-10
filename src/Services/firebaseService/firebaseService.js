@@ -29,6 +29,9 @@ class FirebaseService{
         this.SetMasternodeNotificationEvent = new Subject();
         this.SetAddressNotificationEvent = new Subject();
 
+        this.UpdateNotifications = require('./observables/UpdateNotificationsObservables')(this);
+        this.DeleteNotifications = require('./observables/DeleteNotificationsObservables')(this);
+
         this.BlockNotification = require('./observables/BlockNotificationObservables')(this);
         this.SetBlockNotification = require('./observables/SetBlockNotificationObservables')(this);
 
