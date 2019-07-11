@@ -1,5 +1,5 @@
 const { Observable, Subject, from, of } = require('rxjs');
-const { shareReplay, switchMap, map, filter, finalize } = require('rxjs/operators');
+const { shareReplay, switchMap, map, filter, finalize, publishReplay } = require('rxjs/operators');
 const { refCountDelay } = require('rxjs-etc/operators');
 
 
@@ -7,9 +7,6 @@ module.exports = function (chaincoinService) {
 
 
   
-
-
-
   var blockCache = {};
 
   return (hash) => {
@@ -51,11 +48,8 @@ module.exports = function (chaincoinService) {
         finalize(() => { 
           delete blockCache[hash] 
         }),
-        shareReplay({
-          bufferSize: 1,
-          refCount: true
-        }),
-        
+        publishReplay(1),
+        refCountDelay(300000), //cache data for 5 mins
         filter(block => {
           return !updatingBlock;
         })
