@@ -2,7 +2,7 @@ const { Observable, Subject, combineLatest, zip } = require('rxjs');
 const { shareReplay, map, switchMap, first } = require('rxjs/operators');
 
 
-module.exports = function (indexerService) {
+module.exports = function (indexerService) { //TODO: could share this data
 
   return (blockId, pageSize) => {
     var observables = [];
