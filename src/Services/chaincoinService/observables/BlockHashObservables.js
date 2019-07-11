@@ -1,31 +1,50 @@
-const { Observable, Subject } = require('rxjs');
-const { shareReplay, map, switchMap } = require('rxjs/operators');
+const { Observable, Subject, from, of } = require('rxjs');
+const { shareReplay, switchMap, map, filter, finalize, publishReplay } = require('rxjs/operators');
+const { refCountDelay } = require('rxjs-etc/operators');
 
 
 module.exports = function (chaincoinService) {
 
-  var blockHashCache = chaincoinService.BestBlockHash.pipe( //TODO: this could be better 
-    map(bestBlockHash => {
-      return {};
-    }),
-    shareReplay({
-      bufferSize: 1,
-      refCount: false
-    })
-  );
+  var cache = {};
 
   return (blockId) => {
 
-    return blockHashCache.pipe(
-      switchMap(blockHashCache =>{
-        if (blockHashCache[blockId] == null){
-          var promise = chaincoinService.chaincoinApi.getBlockHash(blockId);
-          blockHashCache[blockId] = promise;
+    var observable = cache[blockId];
+    if (observable == null)
+    {
+      var _blockHash = null;
+      var updating = false;
 
-          promise.catch(() => blockHashCache[blockId] = null);
-        }
-        return blockHashCache[blockId];
-      })
-    )
+      observable = chaincoinService.BestBlockHash.pipe(
+        filter(bestBlockHash => {
+          return _blockHash == null
+        }),
+        switchMap(bestBlockHash => {
+          var subject = new Subject();
+          updating = true;
+          chaincoinService.chaincoinApi.getBlockHash(blockId)
+          .finally(()=>updating = false)
+          .then((blockHash) => {
+            subject.next(blockHash)
+          }).catch(err => {
+            subject.error(err)
+          });
+          return subject;
+        }),
+        finalize(() => { 
+          delete cache[blockId] 
+        }),
+        publishReplay(1),
+        refCountDelay(300000), //cache data for 5 mins
+        filter(blockHash => {
+          return !updating;
+        })
+      );
+      
+
+      cache[blockId] = observable;
+    }
+    
+    return observable;
   };
 };
