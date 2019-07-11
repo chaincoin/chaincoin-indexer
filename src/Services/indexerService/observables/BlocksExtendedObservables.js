@@ -1,5 +1,5 @@
-const { Observable, Subject, combineLatest } = require('rxjs');
-const { shareReplay, map, switchMap, first  } = require('rxjs/operators');
+const { Observable, Subject, combineLatest, zip } = require('rxjs');
+const { shareReplay, map, switchMap, first } = require('rxjs/operators');
 
 
 module.exports = function (indexerService) {
@@ -10,7 +10,7 @@ module.exports = function (indexerService) {
     {
         observables.push(indexerService.chaincoinService.BlockHash(blockId - i).pipe(
             switchMap(blockHash => {
-                return combineLatest(indexerService.chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(
+                return zip(indexerService.chaincoinService.Block(blockHash),indexerService.Block(blockHash)).pipe(
                     map(([block, dbBlock]) =>{ 
                         if (dbBlock == null) return block;
                         var transaction = dbBlock.tx.map(tx => Object.assign({}, tx,{value: parseFloat(tx.value.toString())}));
@@ -25,6 +25,6 @@ module.exports = function (indexerService) {
         ));
     }
     
-    return combineLatest(observables);
+    return zip(...observables);
   }
 };
