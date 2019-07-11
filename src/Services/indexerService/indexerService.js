@@ -55,7 +55,7 @@ class IndexerService{
     start()
     {
         if (this.bestBlockHashSubscription != null) throw "Service already started";
-        this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => this.run(bestBlockHash)));
+        this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(first()).subscribe((bestBlockHash => setTimeout(()=>this.run(bestBlockHash),0)));
         this.newTransactionHashSubscription = this.chaincoinService.NewTransactionHash.subscribe((txid => this.ProcessNewTransactionEvent(txid))); //TODO: is this waste full
     }
 
@@ -141,7 +141,7 @@ class IndexerService{
         {
             //Setup new subscription but filter the best block hash out if it matches out current block hash,
             //this should filter out the tip hash if we have got to it, other wise it will trigger again
-            this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(filter(newBestBlockHash => newBestBlockHash != this.currentBlockHash),first()).subscribe((bestBlockHash) => this.run(bestBlockHash));
+            this.bestBlockHashSubscription = this.chaincoinService.BestBlockHash.pipe(filter(newBestBlockHash => newBestBlockHash != this.currentBlockHash),first()).subscribe((bestBlockHash) => setTimeout(()=>this.run(bestBlockHash),0));
         }
 
         this.ProcessingLoopComplete.next({});
