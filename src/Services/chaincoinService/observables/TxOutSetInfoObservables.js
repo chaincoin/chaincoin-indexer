@@ -1,6 +1,6 @@
 const { Observable, Subject } = require('rxjs');
-const { shareReplay } = require('rxjs/operators');
-
+const { publishReplay } = require('rxjs/operators');
+const { refCountDelay } = require('rxjs-etc/operators');
 
 
 
@@ -32,10 +32,10 @@ module.exports = function (chaincoinService) {
         return () => {
           if(bestBlockHashSubscription != null) bestBlockHashSubscription.unsubscribe();
         }
-      }).pipe(shareReplay({
-        bufferSize: 1,
-        refCount: true
-      }));
+      }).pipe(
+        publishReplay(1),
+        refCountDelay(300000)
+      );
       
       txOutSetInfoObservableCache[blockHash] = txOutSetInfoObservable;
     }
