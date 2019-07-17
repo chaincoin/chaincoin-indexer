@@ -143,6 +143,7 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         NetworkHashps:chaincoinService.NetworkHashps,
         TxOutSetInfo:chaincoinService.TxOutSetInfo,
         EstimateSmartFee: chaincoinService.EstimateSmartFee,
+        ChainTips:() => chaincoinService.ChainTips,
         MemPoolInfo: () => chaincoinService.MemPoolInfo,
         RawMemPool:() => chaincoinService.RawMemPool,
         MemPool:() => chaincoinService.MemPool,
