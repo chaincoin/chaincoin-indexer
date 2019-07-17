@@ -334,7 +334,7 @@ module.exports = function(url) {
     
             for(var i = 0; i < addresses.length; i++)
             {
-                bulk.find({_id:addresses[i]._id}).upsert().updateOne(addresses[i]);
+                bulk.find({_id:addresses[i]._id}).upsert().updateOne({$set:addresses[i]});
             }
             
             bulk.execute(function(err,result) {
