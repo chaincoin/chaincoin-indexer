@@ -1,84 +1,44 @@
-var  ChaincoinService = require('./Services/chaincoinService/chaincoinService');
-var  IndexerService = require('./Services/indexerService/indexerService');
-var  MasternodeService = require('./Services/masternodeService/masternodeService');
-var  FirebaseService = require('./Services/firebaseService/firebaseService');
-//var  MiningService = require('./Services/miningService/miningService');
-var  HttpService = require('./Services/httpService');
-var  ChaincoinApi = require('./chaincoinApi');
-var  IndexApi = require('./indexApi');
+const  ChaincoinService = require('./Services/chaincoinService/chaincoinService');
+const  IndexerService = require('./Services/indexerService/indexerService');
+const  MasternodeService = require('./Services/masternodeService/masternodeService');
+const  FirebaseService = require('./Services/firebaseService/firebaseService');
+//const  MiningService = require('./Services/miningService/miningService');
+const ChaincoinServer = require(( process.env.chaincoinClientSource || 'Z:/Software/Chaincoin/Tools/Chaincoin Client') + '/ChaincoinServer');
+const  HttpService = require('./Services/httpService');
+const  ChaincoinApi = require('./chaincoinApi');
+const  IndexApi = require('./indexApi');
 
 
+const chaincoinServer = new ChaincoinServer();
+if (process.env.chaincoinHost != null) chaincoinServer.outBoundHosts[0] == process.env.chaincoinHost;
+chaincoinServer.listen.next(false);
+chaincoinServer.Start();
 
-var chaincoinApi = new ChaincoinApi(process.env.chaincoinRpcHost ||"127.0.0.1", process.env.chaincoinRpcPort||8332, process.env.chaincoinRpcUser||"chaincoin", process.env.chaincoinRpcPassword||"vjjbuuy754edvowqbnohc7yjb", process.env.chaincoinRpcThreads||10);
-var indexApi = new IndexApi(process.env.MONGODBURL || "mongodb://localhost:27017/");
+const chaincoinApi = new ChaincoinApi(process.env.chaincoinRpcHost ||"127.0.0.1", process.env.chaincoinRpcPort||8332, process.env.chaincoinRpcUser||"chaincoin", process.env.chaincoinRpcPassword||"vjjbuuy754edvowqbnohc7yjb", process.env.chaincoinRpcThreads||10);
+const indexApi = new IndexApi(process.env.MONGODBURL || "mongodb://localhost:27017/");
 
-var chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
+const chaincoinService = new ChaincoinService(process.env.chaincoinZmq || "tcp://127.0.0.1:38832",chaincoinApi);
 chaincoinService.start();
 
-var masternodeService = new MasternodeService(chaincoinService, indexApi);
+const masternodeService = new MasternodeService(chaincoinService, indexApi);
 masternodeService.start();
 
-var indexerService = new IndexerService(chaincoinService, indexApi);
+const indexerService = new IndexerService(chaincoinService, indexApi);
 indexerService.start()
 
 
-var firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi, process.env.firebaseKey);
+const firebaseService = new FirebaseService(chaincoinService, indexerService, indexApi, process.env.firebaseKey);
 firebaseService.start();
 
-//var miningService = new MiningService(chaincoinApi);
+
+
+//const miningService = new MiningService(chaincoinApi);
 //miningService.start();
 
-var httpService = new HttpService(process.env.httpPort ||8080,chaincoinService,masternodeService,indexerService, firebaseService, /*miningService*/);
+const httpService = new HttpService(process.env.httpPort ||8080,chaincoinService,masternodeService,indexerService, firebaseService,null,chaincoinServer);
 httpService.start();
 
 
 
 
 
-
-/*
-var sub = chaincoinService.Block("00000000000a38ddcd0734e3e810fc3d607ab4eb6dab3292b9a1e6c4f3db3cb9").subscribe((block) =>{
-
-   
-});
-
-
-
-chaincoinService.NewBlockHash.subscribe((NewBlockHash) =>{
-
-    
-});
-
-chaincoinService.NewTransactionHash.subscribe((NewTransactionHash) =>{
-
-});
-
-chaincoinService.BestBlockHash.subscribe((bestBlockHash) =>{
-
-});
-
-chaincoinService.BlockchainInfo.subscribe((BlockchainInfo) =>{
-
-});
-
-
-chaincoinService.BlockCount.subscribe((bestBlockHash) =>{
-    
-});
-
-chaincoinService.ChainTxStats.subscribe((ChainTxStats) =>{
-  
-});
-
-chaincoinService.Difficulty.subscribe((Difficulty) =>{
-
-});
-
-chaincoinService.NetworkHashps.subscribe((NetworkHashps) =>{
-
-});
-
-chaincoinService.TxOutSetInfo.subscribe((TxOutSetInfo) =>{
-
-});
-*/

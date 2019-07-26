@@ -8,13 +8,13 @@ var { first, map, switchMap } = require('rxjs/operators');
 class HttpService{
 
 
-    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService, miningService) {
+    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService, miningService);
-        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService, miningService);
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer);
+        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer);
         this.webSockets = [];
 
 
