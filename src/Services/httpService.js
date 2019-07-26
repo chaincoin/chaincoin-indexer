@@ -8,13 +8,13 @@ var { first, map, switchMap } = require('rxjs/operators');
 class HttpService{
 
 
-    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer) {
+    constructor(port, chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServerService) {
         this.port = port;
         
         this.server = null;
         this.wsServer = null;
-        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer);
-        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServer);
+        this.serverObservables = servicesToObservables(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServerService);
+        this.serverMethods = servicesToMethods(chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServerService);
         this.webSockets = [];
 
 
@@ -220,16 +220,18 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
 }
 
 
-var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService, miningService) =>{
+var servicesToMethods = (chaincoinService, masternodeService, indexerService, firebaseService, miningService, chaincoinServerService) =>{
     return {
         updateNotifications: firebaseService.UpdateNotifications,
         deleteNotifications: firebaseService.DeleteNotifications,
         setBlockNotification: firebaseService.SetBlockNotification,
         setAddressNotification: firebaseService.SetAddressNotification,
         setMasternodeNotification: firebaseService.SetMasternodeNotification,
-        sendRawTransaction: chaincoinService.SendRawTransaction
+        sendRawTransaction: chaincoinService.SendRawTransaction,
         //getMiningHeader: () => from(miningService.getMiningHeader()),
         //submitBlock: (jobId, time, nonce, extraNonce) => from(miningService.submitBlock(jobId, time, nonce, extraNonce)),
+        GenerateMasternodeBoardcastHashes: chaincoinServerService.GenerateMasternodeBoardcastHashes,
+        SendMasternodeBoardcast: chaincoinServerService.SendMasternodeBoardcast
     }
 }
 
