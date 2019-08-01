@@ -207,7 +207,27 @@ module.exports = function(url) {
         }));
     }
 
-    this.saveSpendAddressTxs = (spendAddressTxs) => {
+    this.deleteAddressTxs = (addressTxIds) => {
+        return this.connect().then(() => new Promise((resolve, reject) =>
+        {
+            var bulk = this._addressTxsCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < addressTxIds.length; i++)
+            {
+                bulk.find({_id:addressTxIds[i]}).remove();
+            }
+            
+            bulk.execute((err,result)  => {
+    
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    }
+
+    this.saveSpendAddressTxs = (spendAddressTxs, spent) => {
         return this.connect().then(() => new Promise((resolve, reject)  => 
         {
             var bulk = this._addressTxsCollection.initializeUnorderedBulkOp();
@@ -216,7 +236,7 @@ module.exports = function(url) {
             {
                 bulk.find({_id:spendAddressTxs[i]._id}).updateOne({
                     $set: {
-                        spent : true
+                        spent : spent
                     }
                 });
             }
@@ -367,6 +387,27 @@ module.exports = function(url) {
     
     };
 
+    this.deleteTransactions = (transactionIds) =>{
+        return this.connect().then(() => new Promise((resolve, reject) => 
+        {
+            var bulk = this._transactionsCollection.initializeUnorderedBulkOp();
+    
+            for(var i = 0; i < transactionIds.length; i++)
+            {
+                bulk.find({_id:transactionIds[i]}).remove();
+            }
+            
+            bulk.execute(function(err,result) {
+    
+                if (err == null && result.isOk()) resolve(result);
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    };
+
     this.insertTransaction = (txid, transaction) =>{
         return this.connect().then(() => new Promise((resolve, reject) => 
         {
@@ -395,6 +436,26 @@ module.exports = function(url) {
             for(var i = 0; i < blocks.length; i++)
             {
                 bulk.find({_id:blocks[i]._id}).upsert().updateOne(blocks[i]);
+            }
+            
+            bulk.execute(function(err,result) {
+                if (err == null && result.isOk()) resolve();
+                else reject(err);
+             
+            });
+            
+        }));
+    
+    }
+
+    this.deleteBlocks = (blockIds) => {
+        return this.connect().then(() => new Promise((resolve, reject) =>
+        {
+            var bulk = this._blocksCollection.initializeOrderedBulkOp();
+    
+            for(var i = 0; i < blockIds.length; i++)
+            {
+                bulk.find({_id:blockIds[i]}).remove();
             }
             
             bulk.execute(function(err,result) {

@@ -89,48 +89,41 @@ class IndexerService{
             var currentBlock = await this.chaincoinService.Block(this.currentBlockHash).pipe(first()).toPromise();
 
             if (currentBlock.confirmations == -1) {
-                //TODO: Reorg, work back through chain and find where fork happened
-                //currentBlock.previousblockhash
+                this.currentBlockHash = await this.RollBack(currentBlock);
+
             }
-
-            //var newBlocks = (await this.chaincoinService.Blocks(currentBlock.height + this.asyncBlockSync,this.asyncBlockSync).pipe(first()).toPromise()).reverse();
-            //TODO: check there hasnt been a reorg in data
-
-
-            var newBlock = null;
-            var newBlocks = [];
-            if (currentBlock.nextblockhash != null)
-            { 
-                for(var i = 0; i < this.asyncBlockSync; i++)
-                {
-                    newBlock = await this.chaincoinService.Block((newBlock || currentBlock).nextblockhash).pipe(first()).toPromise();
-
-                    if (newBlock.confirmations == -1) {
-                        //TODO: Reorg, work back through chain and find where fork happened
-                        //currentBlock.previousblockhash
-                    }
-        
-
-                    newBlocks.push(newBlock);
-                    if (newBlock.nextblockhash == null) break;
-
-                    if (this.bestBlockHashSubscription == null) return;
-                }
-
-                var blockDataPromises = newBlocks.map(newBlock => this.ProcessBlock(newBlock));
-                var blockDatas = await Promise.all(blockDataPromises);
-
-                await this.SaveBlockDatas(blockDatas);
-
-                if (newBlocks.length > 0) this.currentBlockHash = newBlocks[newBlocks.length - 1].hash;
-            }
+            else
+            {
+                var newBlock = null;
+                var newBlocks = [];
+                if (currentBlock.nextblockhash != null)
+                { 
+                    for(var i = 0; i < this.asyncBlockSync; i++)
+                    {
+                        newBlock = await this.chaincoinService.Block((newBlock || currentBlock).nextblockhash).pipe(first()).toPromise();
+    
+                        if (newBlock.confirmations == -1) {
+                            break;
+                        }
             
+    
+                        newBlocks.push(newBlock);
+                        if (newBlock.nextblockhash == null) break;
+    
+                        if (this.bestBlockHashSubscription == null) return;
+                    }
+    
+                    var blockDataPromises = newBlocks.map(newBlock => this.ProcessBlock(newBlock));
+                    var blockDatas = await Promise.all(blockDataPromises);
+    
+                    await this.SaveBlockDatas(blockDatas);
+    
+                    if (newBlocks.length > 0) this.currentBlockHash = newBlocks[newBlocks.length - 1].hash;
+                }
+                
+            }
 
             if (this.bestBlockHashSubscription == null) return;
-
-
-            
-
         }
         catch(ex)
         {
@@ -147,6 +140,58 @@ class IndexerService{
         this.ProcessingLoopComplete.next({});
     }
 
+    async RollBack(currentBlock){
+        debugger;
+        const concat = (x,y) => x.concat(y);
+        const flatMap = (xs, f) => xs.map(f).reduce(concat, []);
+
+        var previousBlock = null;
+        var staleBlocks = [currentBlock];
+        while(previousBlock == null || previousBlock.confirmations == -1)
+        {
+            previousBlock = await this.chaincoinService.Block((previousBlock || currentBlock).previousblockhash).pipe(first()).toPromise();
+            if (previousBlock.confirmations == -1) staleBlocks.push(previousBlock);
+        }
+
+        var blockDataPromises = staleBlocks.map(newBlock => this.ProcessBlock(newBlock));
+        var blockDatas = await Promise.all(blockDataPromises);
+
+        var dbAddressTxIds = flatMap(blockDatas,blockData => flatMap(blockData.transactionDatas,transactionData => transactionData.dbAddressTxs)).map(dbAddressTx => dbAddressTx._id);
+ 
+        if (dbAddressTxIds.length > 0) await this.indexApi.deleteAddressTxs(dbAddressTxIds);
+
+
+        var dbAddressTxUpdates = flatMap(blockDatas,blockData => flatMap(blockData.transactionDatas,transactionData => transactionData.dbAddressTxUpdates));
+        if (dbAddressTxUpdates.length > 0) await this.indexApi.saveSpendAddressTxs(dbAddressTxUpdates, false);
+
+        var addressIdsObject = {};
+        blockDatas.forEach(blockData => blockData.transactionDatas.forEach(transactionData => {
+            addressIdsObject = Object.assign(addressIdsObject,transactionData.addresses);
+        }));
+
+        var addressIds = Object.keys(addressIdsObject);
+        if (addressIds.length > 0){
+            var addressSummaries = await this.indexApi.getCalculateAddresses(addressIds);
+            addressSummaries.forEach(addressSummary => addressSummary._id = addressSummary.address);
+    
+            var saveAddressesResult = await this.indexApi.saveAddresses(addressSummaries);
+            if (saveAddressesResult.nInserted != 0) this.AddressesInserted.next(saveAddressesResult.nInserted);
+
+            //Trigger Observables
+            addressSummaries.forEach(addressSummary => this.AddressUpdated.next(addressSummary));
+        }
+
+
+        var dbTransactions = flatMap(blockDatas,blockData => blockData.transactionDatas.map(transactionData => transactionData.dbTransaction._id));
+        if (dbTransactions.length > 0) await this.indexApi.deleteTransactions(dbTransactions);
+
+
+        var dbBlockIds = blockDatas.map(blockData => blockData.dbBlock).map(dbBlock =>dbBlock._id);
+        if (dbBlockIds.length > 0) await this.indexApi.deleteBlocks(dbBlockIds);
+
+
+    }
+
 
     async SaveBlockDatas(blockDatas){
 
@@ -160,7 +205,7 @@ class IndexerService{
         
 
         var dbAddressTxUpdates = flatMap(blockDatas,blockData => flatMap(blockData.transactionDatas,transactionData => transactionData.dbAddressTxUpdates));
-        if (dbAddressTxUpdates.length > 0) await this.indexApi.saveSpendAddressTxs(dbAddressTxUpdates); //TODO: maybe i should be checking to see if the address tx is in the dbAddressTxs, if it is update it and filter out
+        if (dbAddressTxUpdates.length > 0) await this.indexApi.saveSpendAddressTxs(dbAddressTxUpdates, true); //TODO: maybe i should be checking to see if the address tx is in the dbAddressTxs, if it is update it and filter out
         
 
 
