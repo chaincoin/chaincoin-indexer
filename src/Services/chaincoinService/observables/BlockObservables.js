@@ -1,4 +1,4 @@
-const { Observable, Subject, from, of } = require('rxjs');
+const { Observable, Subject, BehaviorSubject, combineLatest, from, of } = require('rxjs');
 const { shareReplay, switchMap, map, filter, finalize, publishReplay } = require('rxjs/operators');
 const { refCountDelay } = require('rxjs-etc/operators');
 
@@ -9,7 +9,7 @@ module.exports = function (chaincoinService) {
   
   var blockCache = {};
 
-  return (hash) => {
+  return (hash, clearCache) => {
 
     var observable = blockCache[hash];
     if (observable == null)
@@ -17,11 +17,13 @@ module.exports = function (chaincoinService) {
       var _block = null;
       var updatingBlock = false;
 
-      observable = chaincoinService.BestBlockHash.pipe(
-        filter(bestBlockHash => {
+      var clearCacheSubject = new BehaviorSubject(true);
+
+      observable = combineLatest(chaincoinService.BestBlockHash, clearCacheSubject).pipe(
+        filter(()=> {
           return _block == null || _block.nextblockhash == null
         }),
-        switchMap(bestBlockHash => {
+        switchMap(() => {
           var subject = new Subject();
           updatingBlock = true;
           chaincoinService.chaincoinApi.getBlock(hash)
@@ -61,8 +63,13 @@ module.exports = function (chaincoinService) {
         })*/
       );
       
+      observable.clearCacheSubject
 
       blockCache[hash] = observable;
+    }
+    else if (clearCache)
+    {
+      observable.clearCacheSubject.next(true);
     }
     
     return observable;

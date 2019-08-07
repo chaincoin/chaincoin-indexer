@@ -149,7 +149,7 @@ class IndexerService{
         var staleBlocks = [currentBlock];
         while(previousBlock == null || previousBlock.confirmations == -1)
         {
-            previousBlock = await this.chaincoinService.Block((previousBlock || currentBlock).previousblockhash).pipe(first()).toPromise();
+            previousBlock = await this.chaincoinService.Block((previousBlock || currentBlock).previousblockhash, true).pipe(first()).toPromise();
             if (previousBlock.confirmations == -1) staleBlocks.push(previousBlock);
         }
 
@@ -188,6 +188,7 @@ class IndexerService{
 
         var dbBlockIds = blockDatas.map(blockData => blockData.dbBlock).map(dbBlock =>dbBlock._id);
         if (dbBlockIds.length > 0) await this.indexApi.deleteBlocks(dbBlockIds);
+
 
 
     }
