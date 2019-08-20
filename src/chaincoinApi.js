@@ -118,6 +118,10 @@ class ChaincoinApi{
     getPeerInfo()  {
         return this.rpcRequest("getpeerinfo", []);
     }
+
+    getBannedList()  {
+        return this.rpcRequest("listbanned", []);
+    }
     
     getMasternodeList() {
         return this.rpcRequest("masternodelist", []);
