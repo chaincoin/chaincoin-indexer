@@ -29,6 +29,7 @@ class ChaincoinService{
         
 
         this.PeerInfo = require('./observables/PeerInfoObservable')(this);
+        this.BannedList = require('./observables/BannedListObservable')(this);
         this.ConnectoinCount = require('./observables/ConnectionCountObservable')(this);
 
         this.MasternodeList = require('./observables/MasternodeListObservable')(this);
