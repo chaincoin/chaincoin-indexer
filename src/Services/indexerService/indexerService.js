@@ -102,7 +102,7 @@ class IndexerService{
                     {
                         newBlock = await this.chaincoinService.Block((newBlock || currentBlock).nextblockhash).pipe(first()).toPromise();
     
-                        if (newBlock.confirmations == -1) {
+                        if (newBlock.confirmations == -1) { //TODO: this chain switch/reorg logic could be better
                             break;
                         }
             
@@ -141,7 +141,6 @@ class IndexerService{
     }
 
     async RollBack(currentBlock){
-        debugger;
         const concat = (x,y) => x.concat(y);
         const flatMap = (xs, f) => xs.map(f).reduce(concat, []);
 
