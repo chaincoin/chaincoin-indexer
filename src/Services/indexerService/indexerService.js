@@ -81,7 +81,7 @@ class IndexerService{
             {
                 var topBlock = await this.indexApi.getTopBlock();
                 if (topBlock != null) this.currentBlockHash = topBlock.hash;
-                else this.currentBlockHash = "00000f639db5734b2b861ef8dbccc33aebd7de44d13de000a12d093bcc866c64";
+                else this.currentBlockHash = process.env.genesisBlockHash || "00000f639db5734b2b861ef8dbccc33aebd7de44d13de000a12d093bcc866c64";
             }
   
 
