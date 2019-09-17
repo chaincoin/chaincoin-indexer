@@ -147,6 +147,8 @@ var servicesToObservables = (chaincoinService, masternodeService, indexerService
         MemPoolInfo: () => chaincoinService.MemPoolInfo,
         RawMemPool:() => chaincoinService.RawMemPool,
         MemPool:() => chaincoinService.MemPool,
+
+        GObjectList:() => chaincoinService.GObjectList,
         
         PeerInfo:() => chaincoinService.PeerInfo,
         BannedList:() => chaincoinService.BannedList,

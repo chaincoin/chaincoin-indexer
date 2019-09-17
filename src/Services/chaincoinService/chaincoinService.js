@@ -41,6 +41,7 @@ class ChaincoinService{
         this.MemPoolInfo = require('./observables/MemPoolInfoObservable')(this);
         this.RawMemPool = require('./observables/RawMemPoolObservable')(this);
         this.MemPool = require('./observables/MemPoolObservable')(this);
+        this.GObjectList = require('./observables/GObjectListObservable')(this);
 
         this.ChainTips = require('./observables/ChainTipsObservable')(this);
 

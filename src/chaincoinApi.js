@@ -164,6 +164,10 @@ class ChaincoinApi{
         return this.rpcRequest("masternode", ["genkey"]);
     }
 
+    getGObjectList() {
+        return this.rpcRequest("gobject", ["list"]);
+    }
+
     rpcRequest(method, params){
 
 
